@@ -1,0 +1,20 @@
+<project
+    name = "DAXnet"
+    description = "DAX network components"
+    prefix = "dax"
+    script = "zproject.gsl"
+    email = "bv@bnl.gov"
+    repository = "https://github.com/brettviren/daxnet"
+    license = "LGPL">
+  <include filename = "license.xml"/>
+  <version major = "0" minor = "0" />
+
+  <use project = "zyre" />
+
+  <!-- add some targets, python, python_cffi, debian, redhat, travis -->
+
+  <!-- A DAX identity lets an application participates in the DAX network -->
+  <class name = "daxid" />
+
+
+</project>
