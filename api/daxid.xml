@@ -58,20 +58,18 @@
   <method name = "nickname">
     Return our node nickname. Caller must free returned string using
     zstr_free ().
-    <return type = "string" />
+    <return type = "string"/>
   </method>
   
   <method name = "peers">
     Return zlist of IDs of active peers.
-    Caller owns return value and must destroy it when done.
-    <return type = "zlist" fresh = "1" />
+    <return type = "zlist" fresh="1" />
   </method>
 
   <method name = "peer">
-    Return information about the peer.   Return NULL if uknown.
-    Caller owns return value.
+    Return information about the peer.   Return NULL if unknown.
     <argument name = "ident" type = "string" />
-    <return type = "zhash" fresh = "1"/>
+    <return type = "zhash" fresh="1" />
   </method>
     
   <method name = "start">

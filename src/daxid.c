@@ -43,10 +43,7 @@ daxid_new (void)
     daxid_t *self = (daxid_t *) zmalloc (sizeof (daxid_t));
     assert (self);
 
-    daxid_t* self = (hydraw_t*) zmalloc(sizof(hydra_t));
-    if (self) {
-        self->actor = zactor_new(s_self_actor, NULL);
-    }
+    self->actor = zactor_new(s_self_actor, NULL);
     if (self->actor == NULL) {
         daxid_destroy (&self);
     }
@@ -73,16 +70,6 @@ daxid_set_nickname (daxid_t *self, const char *nickname)
     zsock_send (self->actor, "sss", "SET", "NICKNAME", nickname);
 }
 
-const char *
-daxid_nickname (hydra_t *self)
-{
-    assert (self);
-    char *nickname;
-    zsock_send (self->actor, "ss", "GET", "NICKNAME");
-    zsock_recv (self->actor, "s", &nickname);
-    return nickname;
-}
-
 void
 daxid_set_endpoint (daxid_t *self, const char *rolename, const char *nodename, const char* endpoint)
 {
@@ -91,7 +78,7 @@ daxid_set_endpoint (daxid_t *self, const char *rolename, const char *nodename, c
     assert (nodename);
 
     char* string = zsys_sprintf("DAX-%s-%s", rolename, nodename);
-    zstr_sendx (self->actor, "SET HEADER", string, endpoint, NULL);
+    zstr_sendx (self->actor, "SET", "HEADER", string, endpoint, NULL);
     zstr_free (&string);
 }
 
@@ -99,10 +86,10 @@ void
 daxid_set_verbose (daxid_t *self)
 {
     assert (self);
-    zstr_sendx (self->actor, "SET VERBOSE", "1", NULL);
+    zstr_sendx (self->actor, "SET", "VERBOSE", "1", NULL);
 }
 
-char *
+const char *
 daxid_nickname (daxid_t *self)
 {
     assert (self);
@@ -113,14 +100,13 @@ daxid_nickname (daxid_t *self)
 }
 
 zlist_t *
-daxid_peers (daxid_t *self, int seen)
+daxid_peers (daxid_t *self)
 {
     assert (self);
-
-    zlist_t *peers;
+    zlist_t *peers=0;
     zstr_send (self->actor, "PEERS");
     zsock_recv (self->actor, "p", &peers);
-    return peers;
+    return peers;               /* fresh */
 }
 
 zhash_t *
@@ -128,10 +114,14 @@ daxid_peer (daxid_t *self, const char *ident)
 {
     assert (self);
 
-    zhash_t *peer;
-    zstr_send (self->actor, "PEER");
-    zsock_recv (self->actor, "p", &peer);
-    return peer;
+    zsock_send(self->actor, "ss", "PEER", ident);
+    zframe_t* frame = zframe_recv(self->actor);
+    if (!frame) {
+        return zhash_new();
+    }
+    zhash_t* headers = zhash_unpack(frame);
+    zframe_destroy(&frame);
+    return headers;
 }
 
 int
@@ -153,8 +143,9 @@ typedef struct {
     zsock_t* pipe;              /* the actor pipe */
     zpoller_t *poller;          //  Socket poller
     zyre_t* zyre;               /* heavy lifting */
-    zhashx_t* peers;            /* zyre ENTER event for peers not yet EXIT'ed */
+    zhash_t* peers;            /* info about peers */
     bool started;               //  Are we already running?
+    bool terminated;
     bool verbose;
 } self_t;
 
@@ -166,9 +157,11 @@ s_self_new (zsock_t *pipe, char *directory)
     self->pipe = pipe;
     self->poller = zpoller_new (self->pipe, NULL);
     self->zyre = zyre_new (NULL);
-    self->peers = zhashx_new ();
+    self->peers = zhash_new ();
+    self->started = 0;
     self->verbose = 0;
-    zhashx_set_destructor (self->peers, (czmq_destructor *) zyre_event_destroy);
+    self->terminated = 0;
+
     return self;
 }
 
@@ -179,7 +172,13 @@ s_self_destroy (self_t **self_p)
     if (*self_p) {
         self_t *self = *self_p;
         zpoller_destroy (&self->poller);
-        zhashx_destroy (&self->peers);
+
+        zyre_event_t* event = (zyre_event_t*)zhash_first(self->peers);
+        while (event) {
+            zyre_event_destroy(&event);
+            event = (zyre_event_t*)zhash_next(self->peers);
+        }
+        zhash_destroy (&self->peers);
         zyre_destroy (&self->zyre);
         free (self);
         *self_p = NULL;
@@ -192,11 +191,12 @@ s_self_set_property (self_t *self, zmsg_t *request)
     char *name = zmsg_popstr (request);
     char *value = zmsg_popstr (request);
     if (streq (name, "NICKNAME")) {
+        zsys_info("setting nickname to \"%s\"", value ? value : "(none)");
         zyre_set_name(self->zyre, value);
     }
     else if (streq (name, "HEADER")) {
-        char* endpoint = zmst_popstr(request);
-        zyre_set_header(self, value, "%s", endpoint);
+        char* endpoint = zmsg_popstr(request);
+        zyre_set_header(self->zyre, value, "%s", endpoint);
         free(endpoint);
     }
     else if (streq (name, "VERBOSE")) {
@@ -217,14 +217,14 @@ s_self_get_property (self_t *self, zmsg_t *request)
     char *name = zmsg_popstr (request);
     if (streq (name, "NICKNAME")) {
         //  Get current nickname from server
-        char *nickname = zyre_name(self->zyre);
+        const char *nickname = zyre_name(self->zyre);
         zsock_send (self->pipe, "s", nickname);
-        zstr_free (&nickname);
     }
     else {
         zsys_error ("daxid: - invalid GET property: %s", name);
         assert (false);
     }
+    free (name);
 }
 
 static void
@@ -247,6 +247,32 @@ s_self_start (self_t *self)
 }
 
 static void
+s_self_peers (self_t *self)
+{
+    zsock_send(self->pipe, "p", zhash_keys(self->peers));
+}
+
+static void
+s_self_peer (self_t *self, zmsg_t* request) 
+{
+    char* ident = zmsg_popstr(request);
+    zyre_event_t* event = (zyre_event_t*)zhash_lookup(self->peers, ident);
+    free (ident);
+
+    if (event) {
+        zhash_t* headers = zyre_event_headers(event);
+        if (headers) {
+            zframe_t* frame = zhash_pack(headers);
+            zframe_send(&frame, self->pipe, 0);
+            return;
+        }
+    }
+
+    zframe_t* empty = zframe_new_empty();
+    zframe_send(&empty, self->pipe, 0);
+}
+
+static void
 s_self_handle_pipe (self_t *self)
 {
     //  Get the whole message off the pipe in one go
@@ -264,6 +290,12 @@ s_self_handle_pipe (self_t *self)
     if (streq (command, "START"))
         s_self_start (self);
     else
+    if (streq (command, "PEERS"))
+        s_self_peers(self);
+    else
+    if (streq (command, "PEER"))
+        s_self_peer (self, request);
+    else
     if (streq (command, "$TERM"))
         self->terminated = true;
     else {
@@ -278,24 +310,46 @@ static void
 s_self_handle_zyre (self_t *self)
 {
     zyre_event_t *event = zyre_event_new (self->zyre);
+    assert(event);
+    const char* evtype = zyre_event_type(event);
     const char* uuid = zyre_event_peer_uuid (event);
-    if (zyre_event_type (event) == ZYRE_EVENT_ENTER) {
-        zhashx_update(self->peers, uuid, event);
-        if (self->verbose) {
-            zsys_debug("daxid %s welcomes %s [%s]",
-                       zyre_name(self->zyre),
-                       uuid,
-                       zyre_event_peer_name(event));
+    zsys_info("got zyre event %s, uuid %s", evtype, uuid);
+    
+    if (streq(evtype,"ENTER")) {
+        zyre_event_t* old = (zyre_event_t*)zhash_lookup(self->peers, uuid);
+        if (old) {
+            zyre_event_destroy(&old);
+        }
+        zhash_update(self->peers, uuid, event);
+        zsys_info("daxid %s welcomes %s [%s]",
+                  zyre_name(self->zyre),
+                  uuid,
+                  zyre_event_peer_name(event));
+
+        // do not destroy the event it's now owned by the zhash
+        return;
+    }
+
+    if (streq(evtype, "EXIT")) {
+
+        zyre_event_t* old = (zyre_event_t*)zhash_lookup(self->peers, uuid);
+        if (old) {
+            zhash_delete(self->peers, uuid);
+            zyre_event_destroy(&old);
+            zsys_info("daxid %s bids adieu to %s [%s]",
+                      zyre_name(self->zyre),
+                      uuid,
+                      zyre_event_peer_name(event));
+        }
+        else {
+            zsys_info("daxid %s later days to unknown %s [%s]",
+                      zyre_name(self->zyre),
+                      uuid,
+                      zyre_event_peer_name(event));
         }
     }
-    else if (zyre_event_type (event) == ZYRE_EVENT_EXIT) {
-        zhashx_delete(self->peers, uuid);
-        if (self->verbose) {
-            zsys_debug("daxid %s bids adieu to %s [%s]",
-                       zyre_name(self->zyre),
-                       uuid,
-                       zyre_event_peer_name(event));
-        }
+    else {
+        zsys_info("daxid unknown event type \"%s\"", evtype);
     }
     zyre_event_destroy (&event);
 }
@@ -355,12 +409,34 @@ daxid_test (bool verbose)
     assert (self);
 
     daxid_set_verbose(self);
-    daxid_set_nickname(self, "nick");
-    assert (streq("nick", daxid_nickname (self)));
+    //daxid_set_nickname(self, "nick");
+    //assert (streq("nick", daxid_nickname (self)));
     
     daxid_set_endpoint(self, "FAKEROLL", "FAKENODE", "tcp://*:12345");
-    daxid_start();
+    daxid_start(self);
     
+    for (int n=0; n<300; ++n) {
+        if (n%10 == 0) {
+            zlist_t* peers = daxid_peers(self);
+            zsys_info("got %d peers", zlist_size(peers));
+            char* peer = (char*) zlist_first(peers);
+            while (peer) {
+                
+                zsys_info("%03d: %s, getting headers", n, peer);
+                zhash_t* headers = daxid_peer(self, peer);
+                zsys_info("\tgot %d headers", zhash_size(headers));
+                for (char* item = (char*)zhash_first (headers); item != NULL;
+                     item = (char*)zhash_next (headers)) {
+                    zsys_info("\t%s = %s", zhash_cursor (headers), item);
+                }
+                zhash_destroy(&headers);
+
+                peer = (char*) zlist_next(peers);
+            }
+            zlist_destroy(&peers);
+        }
+        zclock_sleep(100);
+    }
 
     daxid_destroy (&self);
     //  @end

@@ -79,13 +79,11 @@ DAX_EXPORT const char *
 //  *** Draft method, for development use, may change without warning ***
 //  Return zlist of IDs of active peers.
 //  Caller owns return value and must destroy it when done.
-//  Caller owns return value and must destroy it when done.
 DAX_EXPORT zlist_t *
     daxid_peers (daxid_t *self);
 
 //  *** Draft method, for development use, may change without warning ***
-//  Return information about the peer.   Return NULL if uknown.
-//  Caller owns return value.
+//  Return information about the peer.   Return NULL if unknown.
 //  Caller owns return value and must destroy it when done.
 DAX_EXPORT zhash_t *
     daxid_peer (daxid_t *self, const char *ident);
