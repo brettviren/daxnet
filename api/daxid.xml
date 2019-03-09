@@ -36,7 +36,7 @@
     <argument name = "nickname" type = "string"/>
   </method>
 
-  <method name = "set node endpoint">
+  <method name = "set endpoint">
     Set a node endpoint for this identity.  A node endpoint is the
     ZeroMQ address string of a socket on which the application has
     already called "bind()" or will do so before calling "start()".
@@ -48,14 +48,12 @@
     "DAX-[role-name]-[node-name]".
     <argument name = "rolename" type = "string"/>
     <argument name = "nodename" type = "string"/>
+    <argument name = "endpoint" type = "string"/>
   </method>
 
   <method name = "set verbose">
     Emit diagnostic messages during operation.
   </method>
-
-
-  <!-- getters -->
 
   <method name = "nickname">
     Return our node nickname. Caller must free returned string using
@@ -63,44 +61,19 @@
     <return type = "string" />
   </method>
   
-  <!-- 
-       The main point of daxid, besides debuting its identity, is
-       to give the application understanding of the other identities
-       on the DAX network.  Those idents will come and go over time so
-       the application must poll this API to learn about recent events
-       and the API must keep their state.  It must answer these
-       questions from the app:
-
-       - what are all the idents currently seen?
-
-       - what is the nickname of an ident?
-
-       - how long since a given ident was seen?
-
-       - what are the node endpoints for a given ident?
-
-       - what are all the idents providing a given role or node?
-
-  -->
-
   <method name = "peers">
-    Return zlist of current peer ids seen within the last "seen" milliseconds.
-    If "seen" is 0 then return all peers known.
+    Return zlist of IDs of active peers.
     Caller owns return value and must destroy it when done.
-    <argument name = "seen" type = "integer"/>
     <return type = "zlist" fresh = "1" />
   </method>
 
   <method name = "peer">
-    Return known information about the peer.
+    Return information about the peer.   Return NULL if uknown.
     Caller owns return value.
     <argument name = "ident" type = "string" />
     <return type = "zhash" fresh = "1"/>
   </method>
     
-
-  <!-- operation -->
-
   <method name = "start">
     Start node.  This will announce the identity on the network and
     afterwards no changes to nickname nor node endpoints will be
@@ -108,9 +81,6 @@
     the node.
     <return type = "integer" />
   </method>
-    
-
-  <!-- testing -->
 
   <method name = "test" singleton = "1">
     Self test of this class
