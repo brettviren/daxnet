@@ -163,7 +163,8 @@ set (dax_headers
 
 IF (ENABLE_DRAFTS)
     list(APPEND dax_headers
-        include/daxid.h
+        include/dax_ident.h
+        include/dax_acc.h
     )
 ENDIF (ENABLE_DRAFTS)
 
@@ -181,7 +182,8 @@ set (dax_sources
 
 IF (ENABLE_DRAFTS)
     list (APPEND dax_sources
-        src/daxid.c
+        src/dax_ident.c
+        src/dax_acc.c
     )
 ENDIF (ENABLE_DRAFTS)
 
@@ -381,7 +383,8 @@ set(TEST_CLASSES
 
 IF (ENABLE_DRAFTS)
     list (APPEND TEST_CLASSES
-    daxid
+    dax_ident
+    dax_acc
     )
 ENDIF (ENABLE_DRAFTS)
 

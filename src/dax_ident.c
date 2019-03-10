@@ -1,5 +1,5 @@
 /*  =========================================================================
-    daxid - A DAX identity is used to allow the DAX network to know if its participants.
+    dax_ident - A DAX identity is used to allow the DAX network to know if its participants.
 
 An identity is composed of the following elements:
 
@@ -11,10 +11,10 @@ An identity is composed of the following elements:
 
 More details are in the method documentation.
 
-An application should create a daxid, set various attributes
+An application should create a dax_ident, set various attributes
 based on the application's nodes (nodes are abstract roles combined
 with their defining configuration) and then start the identity.
-Subsequently, the application may call daxid methods to learn
+Subsequently, the application may call dax_ident methods to learn
 about the state of other identifies on the network.
 
     LGPL3, boilerplate to come.
@@ -26,7 +26,7 @@ about the state of other identifies on the network.
 
 //  Structure of our class
 
-struct _daxid_t {
+struct _dax_ident_t {
     zactor_t* actor;            /* background actor */
 };
 
@@ -37,26 +37,26 @@ static void s_self_actor (zsock_t* pipe, void* args);
  * API methods
  */
 
-daxid_t *
-daxid_new (void)
+dax_ident_t *
+dax_ident_new (void)
 {
-    daxid_t *self = (daxid_t *) zmalloc (sizeof (daxid_t));
+    dax_ident_t *self = (dax_ident_t *) zmalloc (sizeof (dax_ident_t));
     assert (self);
 
     self->actor = zactor_new(s_self_actor, NULL);
     if (self->actor == NULL) {
-        daxid_destroy (&self);
+        dax_ident_destroy (&self);
     }
 
     return self;
 }
 
 void
-daxid_destroy (daxid_t **self_p)
+dax_ident_destroy (dax_ident_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
-        daxid_t *self = *self_p;
+        dax_ident_t *self = *self_p;
         zactor_destroy(&self->actor);
         free (self);
         *self_p = NULL;
@@ -64,14 +64,14 @@ daxid_destroy (daxid_t **self_p)
 }
 
 void
-daxid_set_nickname (daxid_t *self, const char *nickname)
+dax_ident_set_nickname (dax_ident_t *self, const char *nickname)
 {
     assert (self);
     zsock_send (self->actor, "sss", "SET", "NICKNAME", nickname);
 }
 
 void
-daxid_set_endpoint (daxid_t *self, const char *rolename, const char *nodename, const char* endpoint)
+dax_ident_set_endpoint (dax_ident_t *self, const char *rolename, const char *nodename, const char* endpoint)
 {
     assert (self);
     assert (rolename);
@@ -83,14 +83,14 @@ daxid_set_endpoint (daxid_t *self, const char *rolename, const char *nodename, c
 }
 
 void
-daxid_set_verbose (daxid_t *self)
+dax_ident_set_verbose (dax_ident_t *self)
 {
     assert (self);
     zstr_sendx (self->actor, "SET", "VERBOSE", "1", NULL);
 }
 
 const char *
-daxid_nickname (daxid_t *self)
+dax_ident_nickname (dax_ident_t *self)
 {
     assert (self);
     char *nickname;
@@ -100,7 +100,7 @@ daxid_nickname (daxid_t *self)
 }
 
 zlist_t *
-daxid_peers (daxid_t *self)
+dax_ident_peers (dax_ident_t *self)
 {
     assert (self);
     zlist_t *peers=0;
@@ -110,7 +110,7 @@ daxid_peers (daxid_t *self)
 }
 
 zhash_t *
-daxid_peer (daxid_t *self, const char *ident)
+dax_ident_peer (dax_ident_t *self, const char *ident)
 {
     assert (self);
 
@@ -125,7 +125,7 @@ daxid_peer (daxid_t *self, const char *ident)
 }
 
 int
-daxid_start (daxid_t *self)
+dax_ident_start (dax_ident_t *self)
 {
     assert (self);
     zsock_send (self->actor, "s", "START");
@@ -204,7 +204,7 @@ s_self_set_property (self_t *self, zmsg_t *request)
         self->verbose = 1;
     }
     else {
-        zsys_error ("daxid: - invalid SET property: %s", name);
+        zsys_error ("dax_ident: - invalid SET property: %s", name);
         assert (false);
     }
     free (name);
@@ -221,7 +221,7 @@ s_self_get_property (self_t *self, zmsg_t *request)
         zsock_send (self->pipe, "s", nickname);
     }
     else {
-        zsys_error ("daxid: - invalid GET property: %s", name);
+        zsys_error ("dax_ident: - invalid GET property: %s", name);
         assert (false);
     }
     free (name);
@@ -239,7 +239,7 @@ s_self_start (self_t *self)
         self->started = true;
     }
     else {
-        zsys_info ("daxid: can't start Zyre discovery service");
+        zsys_info ("dax_ident: can't start Zyre discovery service");
         zyre_destroy (&self->zyre);
         rc = -1;
     }
@@ -299,7 +299,7 @@ s_self_handle_pipe (self_t *self)
     if (streq (command, "$TERM"))
         self->terminated = true;
     else {
-        zsys_error ("daxid: - invalid command: %s", command);
+        zsys_error ("dax_ident: - invalid command: %s", command);
         assert (false);
     }
     zstr_free (&command);
@@ -321,7 +321,7 @@ s_self_handle_zyre (self_t *self)
             zyre_event_destroy(&old);
         }
         zhash_update(self->peers, uuid, event);
-        zsys_info("daxid %s welcomes %s [%s]",
+        zsys_info("dax_ident %s welcomes %s [%s]",
                   zyre_name(self->zyre),
                   uuid,
                   zyre_event_peer_name(event));
@@ -336,20 +336,20 @@ s_self_handle_zyre (self_t *self)
         if (old) {
             zhash_delete(self->peers, uuid);
             zyre_event_destroy(&old);
-            zsys_info("daxid %s bids adieu to %s [%s]",
+            zsys_info("dax_ident %s bids adieu to %s [%s]",
                       zyre_name(self->zyre),
                       uuid,
                       zyre_event_peer_name(event));
         }
         else {
-            zsys_info("daxid %s later days to unknown %s [%s]",
+            zsys_info("dax_ident %s later days to unknown %s [%s]",
                       zyre_name(self->zyre),
                       uuid,
                       zyre_event_peer_name(event));
         }
     }
     else {
-        zsys_info("daxid unknown event type \"%s\"", evtype);
+        zsys_info("dax_ident unknown event type \"%s\"", evtype);
     }
     zyre_event_destroy (&event);
 }
@@ -399,31 +399,46 @@ s_self_actor (zsock_t *pipe, void *args)
 #define SELFTEST_DIR_RW "src/selftest-rw"
 
 void
-daxid_test (bool verbose)
+dax_ident_test (bool verbose)
 {
-    printf (" * daxid: ");
+    printf (" * dax_ident: ");
 
     //  @selftest
     //  Simple create/destroy test
-    daxid_t *self = daxid_new ();
+    dax_ident_t *self = dax_ident_new ();
     assert (self);
 
-    daxid_set_verbose(self);
-    //daxid_set_nickname(self, "nick");
-    //assert (streq("nick", daxid_nickname (self)));
+    dax_ident_set_verbose(self);
+    //dax_ident_set_nickname(self, "nick");
+    //assert (streq("nick", dax_ident_nickname (self)));
     
-    daxid_set_endpoint(self, "FAKEROLL", "FAKENODE", "tcp://*:12345");
-    daxid_start(self);
+    dax_ident_set_endpoint(self, "FAKEROLL", "FAKENODE", "tcp://*:12345");
+    dax_ident_start(self);
     
-    for (int n=0; n<300; ++n) {
-        if (n%10 == 0) {
-            zlist_t* peers = daxid_peers(self);
+    zpoller_t* poller = zpoller_new(NULL);
+
+    const int timeout = 100;
+    const int nwaits = 100;
+    int n = 0;
+    while (!zsys_interrupted) {
+        ++n;
+        //zsys_info("polling %d", n);
+        zsock_t* which = (zsock_t*) zpoller_wait(poller, timeout);
+        if (!which) {
+            if (zpoller_terminated(poller)) {
+                break;
+            }
+
+            if (n%10 != 0) {
+                continue;
+            }
+            zlist_t* peers = dax_ident_peers(self);
             zsys_info("got %d peers", zlist_size(peers));
             char* peer = (char*) zlist_first(peers);
             while (peer) {
                 
                 zsys_info("%03d: %s, getting headers", n, peer);
-                zhash_t* headers = daxid_peer(self, peer);
+                zhash_t* headers = dax_ident_peer(self, peer);
                 zsys_info("\tgot %d headers", zhash_size(headers));
                 for (char* item = (char*)zhash_first (headers); item != NULL;
                      item = (char*)zhash_next (headers)) {
@@ -435,10 +450,10 @@ daxid_test (bool verbose)
             }
             zlist_destroy(&peers);
         }
-        zclock_sleep(100);
     }
+    zpoller_destroy(&poller);
 
-    daxid_destroy (&self);
+    dax_ident_destroy (&self);
     //  @end
     printf ("OK\n");
 }

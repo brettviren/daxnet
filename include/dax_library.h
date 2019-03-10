@@ -84,14 +84,17 @@
 //  These classes are stable or legacy and built in all releases
 //  Draft classes are by default not built in stable releases
 #ifdef DAX_BUILD_DRAFT_API
-typedef struct _daxid_t daxid_t;
-#define DAXID_T_DEFINED
+typedef struct _dax_ident_t dax_ident_t;
+#define DAX_IDENT_T_DEFINED
+typedef struct _dax_acc_t dax_acc_t;
+#define DAX_ACC_T_DEFINED
 #endif // DAX_BUILD_DRAFT_API
 
 
 //  Public classes, each with its own header file
 #ifdef DAX_BUILD_DRAFT_API
-#include "daxid.h"
+#include "dax_ident.h"
+#include "dax_acc.h"
 #endif // DAX_BUILD_DRAFT_API
 
 #ifdef DAX_BUILD_DRAFT_API

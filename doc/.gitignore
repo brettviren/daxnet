@@ -11,8 +11,10 @@
 *.xml7
 
 # Ignore the source doc texts generated from program sources
-daxid.txt
-daxid.doc
+dax_ident.txt
+dax_ident.doc
+dax_acc.txt
+dax_acc.doc
 
 # Make sure to track the manually maintained project description
 !*.adoc

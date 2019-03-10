@@ -17,7 +17,8 @@ src_libdax_la_SOURCES = \
 
 if ENABLE_DRAFTS
 src_libdax_la_SOURCES += \
-    src/daxid.c
+    src/dax_ident.c \
+    src/dax_acc.c
 
 endif
 
@@ -57,7 +58,7 @@ endif #ENABLE_DAX_SELFTEST
 # Install api files into /usr/local/share/zproject
 apidir = @datadir@/zproject/daxnet
 dist_api_DATA = \
-    api/daxid.xml
+    api/dax_ident.xml
 
 # define custom target for all products of /src
 src: \

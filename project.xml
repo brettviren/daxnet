@@ -14,7 +14,9 @@
   <!-- add some targets, python, python_cffi, debian, redhat, travis -->
 
   <!-- A DAX identity lets an application participates in the DAX network -->
-  <class name = "daxid" />
+  <class name = "dax_ident" />
 
+  <!-- A DAX auto configured connection. -->
+  <class name = "dax_acc" />
 
 </project>

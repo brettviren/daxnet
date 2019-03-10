@@ -27,7 +27,8 @@ static test_item_t
 all_tests [] = {
 #ifdef DAX_BUILD_DRAFT_API
 // Tests for draft public classes:
-    { "daxid", daxid_test, false, true, NULL },
+    { "dax_ident", dax_ident_test, false, true, NULL },
+    { "dax_acc", dax_acc_test, false, true, NULL },
 #endif // DAX_BUILD_DRAFT_API
     {NULL, NULL, 0, 0, NULL}          //  Sentinel
 };

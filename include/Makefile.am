@@ -8,7 +8,8 @@ include_HEADERS = \
 
 if ENABLE_DRAFTS
 include_HEADERS += \
-    daxid.h
+    dax_ident.h \
+    dax_acc.h
 
 endif
 
