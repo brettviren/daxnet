@@ -1,0 +1,50 @@
+<class name = "dax_acc">
+  An automatically configured connection (ACC) to the DAX PUB/SUB
+  network provides an application a simplified conduit for message
+  I/O.  The code behind API will handle peer discovery and presence,
+  socket creation, binding, connecting and destruction.
+
+  <constructor>
+    Create an automatic configured connection.
+    <argument name = "appname" type="string"/>
+  </constructor>
+
+  <method name = "make pub">
+    Create and return a dax_pub and declare to zyre the ident and
+    endpoint.  Call debug() after all pubs have been created.
+    <argument name = "ident" type = "string">
+      The pub ident follows a convention of ROLENAME-NODENAME.
+    </argument>
+    <return type = "dax_pub*">
+      Caller may use to publish messages.  dax_acc retains ownership.
+  </method>
+
+  <method name = "debut">
+    Start Zyre.  This must be called after all pubs have been made.
+  </method>
+
+  <method name = "make sub">
+    Set a subscription topics for an epoch.
+    <argument name = "ident" type = "string">
+      The pub ident to connect.
+    </argument>
+    <return type = "dax_sub">
+      Caller should set epoch and topics and then start().  dax_acc retains ownership.
+    </return>
+  </method>
+
+  <method name = "recv">
+    Receive the next message from live subs.  Return NULL if timeout reached.
+    <argument name = "timeout" type = "integer">
+      A timeout in msec, or -1 to wait forever.
+    </argument>
+    <return type="dax_acc_msg"/>
+  </method>
+
+  <method name = "feed">
+    Return the ROUTER socket into which all subs feed.  A message may
+    be received by creating a dax_acc_msg_t on this socket.
+    <return type = "zsock"/>
+  </method>
+
+</class>

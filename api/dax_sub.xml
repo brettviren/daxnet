@@ -1,0 +1,15 @@
+<class>
+  A smart SUB socket that will only provide data from its connected
+  PUB which is within an epoch
+  <method>
+  <argument name = "epoch beg" type = "int64">
+      The begin time for the epoch in which this sub should be active.
+    </argument>
+    <argument name = "epoch end" type = "int64">
+      The end time after which the epoch should go dormant.
+    </argument>
+    <argument name = "topics" type = "zlist">
+      A list of strings giving topics to subcribe."
+    </argument>
+  </method>
+</class>
