@@ -133,7 +133,6 @@ dax_ident_start (dax_ident_t *self)
 }
 
 
-
 /*
  * Internal bits for the background actor
  */
@@ -349,7 +348,7 @@ s_self_handle_zyre (self_t *self)
         }
     }
     else {
-        zsys_info("dax_ident unknown event type \"%s\"", evtype);
+        zsys_info("dax_ident zyre sent unhandled event type \"%s\"", evtype);
     }
     zyre_event_destroy (&event);
 }
@@ -429,26 +428,25 @@ dax_ident_test (bool verbose)
                 break;
             }
 
-            if (n%10 != 0) {
-                continue;
-            }
-            zlist_t* peers = dax_ident_peers(self);
-            zsys_info("got %d peers", zlist_size(peers));
-            char* peer = (char*) zlist_first(peers);
-            while (peer) {
+            if (n%10 == 0) {
+                zlist_t* peers = dax_ident_peers(self);
+                zsys_info("got %d peers", zlist_size(peers));
+                char* peer = (char*) zlist_first(peers);
+                while (peer) {
                 
-                zsys_info("%03d: %s, getting headers", n, peer);
-                zhash_t* headers = dax_ident_peer(self, peer);
-                zsys_info("\tgot %d headers", zhash_size(headers));
-                for (char* item = (char*)zhash_first (headers); item != NULL;
-                     item = (char*)zhash_next (headers)) {
-                    zsys_info("\t%s = %s", zhash_cursor (headers), item);
-                }
-                zhash_destroy(&headers);
+                    zsys_info("%03d: %s, getting headers", n, peer);
+                    zhash_t* headers = dax_ident_peer(self, peer);
+                    zsys_info("\tgot %d headers", zhash_size(headers));
+                    for (char* item = (char*)zhash_first (headers); item != NULL;
+                         item = (char*)zhash_next (headers)) {
+                        zsys_info("\t%s = %s", zhash_cursor (headers), item);
+                    }
+                    zhash_destroy(&headers);
 
-                peer = (char*) zlist_next(peers);
+                    peer = (char*) zlist_next(peers);
+                }
+                zlist_destroy(&peers);
             }
-            zlist_destroy(&peers);
         }
     }
     zpoller_destroy(&poller);
