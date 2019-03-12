@@ -18,7 +18,8 @@ src_libdax_la_SOURCES = \
 if ENABLE_DRAFTS
 src_libdax_la_SOURCES += \
     src/dax_ident.c \
-    src/dax_acc.c
+    src/dax_chirp_msg.c \
+    src/dax_chirp_peer.c
 
 endif
 
@@ -65,6 +66,11 @@ src: \
 		src/dax_selftest \
 		src/libdax.la
 
+# Produce generated code from models in the src directory
+code:
+	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_chirp_msg.xml
+	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_chirp_peer.xml
+	cd $(srcdir); gsl -target:- project.xml
 
 # Directories with test fixtures optionally provided by the project,
 # and with volatile RW data possibly created by a selftest program.

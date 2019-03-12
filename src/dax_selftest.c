@@ -28,7 +28,8 @@ all_tests [] = {
 #ifdef DAX_BUILD_DRAFT_API
 // Tests for draft public classes:
     { "dax_ident", dax_ident_test, false, true, NULL },
-    { "dax_acc", dax_acc_test, false, true, NULL },
+    { "dax_chirp_msg", dax_chirp_msg_test, false, true, NULL },
+    { "dax_chirp_peer", dax_chirp_peer_test, false, true, NULL },
 #endif // DAX_BUILD_DRAFT_API
     {NULL, NULL, 0, 0, NULL}          //  Sentinel
 };

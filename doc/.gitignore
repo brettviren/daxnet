@@ -13,8 +13,10 @@
 # Ignore the source doc texts generated from program sources
 dax_ident.txt
 dax_ident.doc
-dax_acc.txt
-dax_acc.doc
+dax_chirp_msg.txt
+dax_chirp_msg.doc
+dax_chirp_peer.txt
+dax_chirp_peer.doc
 
 # Make sure to track the manually maintained project description
 !*.adoc

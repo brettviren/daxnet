@@ -86,15 +86,18 @@
 #ifdef DAX_BUILD_DRAFT_API
 typedef struct _dax_ident_t dax_ident_t;
 #define DAX_IDENT_T_DEFINED
-typedef struct _dax_acc_t dax_acc_t;
-#define DAX_ACC_T_DEFINED
+typedef struct _dax_chirp_msg_t dax_chirp_msg_t;
+#define DAX_CHIRP_MSG_T_DEFINED
+typedef struct _dax_chirp_peer_t dax_chirp_peer_t;
+#define DAX_CHIRP_PEER_T_DEFINED
 #endif // DAX_BUILD_DRAFT_API
 
 
 //  Public classes, each with its own header file
 #ifdef DAX_BUILD_DRAFT_API
 #include "dax_ident.h"
-#include "dax_acc.h"
+#include "dax_chirp_msg.h"
+#include "dax_chirp_peer.h"
 #endif // DAX_BUILD_DRAFT_API
 
 #ifdef DAX_BUILD_DRAFT_API

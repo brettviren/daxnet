@@ -17,6 +17,7 @@
     </argument>
     <return type = "dax_pub*">
       Caller may use to publish messages.  dax_acc retains ownership.
+    </return>
   </method>
 
   <method name = "debut">

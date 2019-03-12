@@ -164,7 +164,8 @@ set (dax_headers
 IF (ENABLE_DRAFTS)
     list(APPEND dax_headers
         include/dax_ident.h
-        include/dax_acc.h
+        include/dax_chirp_msg.h
+        include/dax_chirp_peer.h
     )
 ENDIF (ENABLE_DRAFTS)
 
@@ -183,7 +184,8 @@ set (dax_sources
 IF (ENABLE_DRAFTS)
     list (APPEND dax_sources
         src/dax_ident.c
-        src/dax_acc.c
+        src/dax_chirp_msg.c
+        src/dax_chirp_peer.c
     )
 ENDIF (ENABLE_DRAFTS)
 
@@ -384,7 +386,8 @@ set(TEST_CLASSES
 IF (ENABLE_DRAFTS)
     list (APPEND TEST_CLASSES
     dax_ident
-    dax_acc
+    dax_chirp_msg
+    dax_chirp_peer
     )
 ENDIF (ENABLE_DRAFTS)
 

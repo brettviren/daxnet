@@ -17,9 +17,12 @@
   <class name = "dax_ident" />
 
   <!-- A DAX auto configured connection. -->
+  <!-- 
   <class name = "dax_acc" />
-
+  -->
+  <class name = "dax_chirp_msg" />
   <model name = "dax_chirp_msg" />
+  <class name = "dax_chirp_peer" />
   <model name = "dax_chirp_peer" />
 
 </project>
