@@ -1,0 +1,39 @@
+<class
+    name = "dax_chirp_peer"
+    title = "DAX Chirp peer"
+    script = "zproto_peer_c"
+    protocol_class = "dax_chirp_msg"
+    project_header = "dax_classes.h"
+    package_dir = "../include"
+    >
+  This is the DAX Chirp peer implementation.  It talks to other DAX
+  Chirp peers through Zyre.
+  
+  <state name = "start">
+    <event name = "ZYRE_ENTER" next = "start">
+      Immediately detects when a node joins and enters them into the chat group
+      <action name = "join" group = "CHAT"/>
+    </event> 
+
+    <event name = "ZYRE_JOIN" next = "chatting">
+      If another node enters send them a hello
+      <action name = "send" cast = "shout" group = "CHAT" message = "HELLO"/>
+    </event>
+  </state>
+  
+  <state name = "chatting">
+    
+    <event name = "HELLO">
+      A new peer is shouting hello to the group whisper back to them a
+      world message
+      <action name = "send" cast = "whisper" message = "WORLD"/>
+    </event>
+    <event name = "WORLD">
+      A peer is welcoming another peer to the network
+    </event>
+
+  </state>
+
+  
+
+</class>
