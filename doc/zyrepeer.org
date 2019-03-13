@@ -1,0 +1,82 @@
+#+title: Zyre Peer
+
+* Introduction
+
+ZeroMQ's ~zproto~ project has a ~zyre_peer_example/~ directory with a ~zproto_peer_c.gsl~.  This GSL script is based on the first class project script ~zproto_client_c.gsl~ and essentially replaces the client's ROUTER with Zyre.  The ~zproto_peer_c~ script, at the time of writing, has suffered bit rot as Zyre and ~zproto~ itself have apparently advanced and broken some older contracts.  A new ~zproto_zyrepeer_c~ has been developed by again starting with a modern ~zproto_client_c~ and with guidance taken from looking at the diff between it and the old ~zproto_peer_c~.  In addition, semantics of "client" are replaced with "peer" throughout.  
+
+With ~zproto_zyrepeer_c~ one can once again use ~zproto~ codegen to create code for protocol codec and state machine classes which use Zyre events and "chat" messages.  This document describes how to use ~zproto_zyrepeer_c~ specifically although some of it applies more generally to ~zproto_client_c~ and ~zproto~ itself.
+
+In the document I use example classes with name prefixed with "~dax_chirp~".  DAX comes from ~daxnet~ and is a ZeroMQ library supporting data acquisition networks which use Zyre for discovery, presence and to coordinate configuration of nodes.  The "chirp" is just meant to imply that this protocol doesn't do much more that what is apparent to us when we hear birds chirping at each other.  
+
+* Input XML files
+
+The ~zproto~ and ~zproject~ GSL scripts consume XML files and generate code and other files.  It was a little confusing what XML file goes where and what each is for.  Here is a summary:
+
+- ~project.xml~ :: this is for ~zproject~, goes in top level directory.  It is used to produce the skeleton of the source project and run GSL against other XML files
+- ~api/<name>.xml~ :: this is to define a synchronous CLASS, usually for fronting an actor
+- ~src/<name>_msg.xml~ :: holds a description of a codec.  The ~_msg~ postfix is convention.
+- ~src/<name>_peer.xml~ :: holds a description of a peer state machine. The ~_peer~ postfix is convention.
+
+* Generating and regenerating
+
+The development phase of a CLASS seems to be some initial chaos followed by deep stability.  During the chaos one needs to regenerate files via ~gsl~ many times, recompile and test.   This was particularly iterative as I understood what the GSL script was actually doing (some of that understanding is captured in this document).
+
+One can try to generate files by running at the top of the source:
+
+#+BEGIN_EXAMPLE
+  $ gsl project.xml
+#+END_EXAMPLE
+
+This is careful NOT to overwrite existing files.  In the time of stability that's a nice safe thing.  During the time of chaos, it's rather annoying and led to a few "why is nothing I do make any change?" confusion.  A more "forceful" regeneration might be done like:
+
+#+BEGIN_EXAMPLE
+  $ cd src ; gsl -trace:1 dax_chirp_{msg,peer}.xml &&  cd -
+#+END_EXAMPLE
+
+This will overwrite headers in ~include/~ and *some* source in ~src/~.  The ones that are "100% generated" will be overwritten:
+
+#+BEGIN_EXAMPLE
+  $ grep -c 100% include/*.h src/*.{c,inc}|grep -v :0
+#+END_EXAMPLE
+
+One critical source file that will may be /carfeully/ overwritten by GSL is the ~dax_chirp_peer.c~.  This file it is meant to receive post-codegen editing by a human being.  If a new /action/ is added to the peer XML file then skeleton code will be /added/ to this source file.  If that action is removed from the XML then codegen will leave the previous addition although it is now vestigial and the human should likely remove it manually.
+
+While developing ~zproto_zyrepeer_c~ itself, I found it convenient to apply *no* human editing of any codegen files and explicitly ~rm~ all prior to rerunning ~gsl~ just to assure they reflected any changes of the GSL script and XML inputs.  Even when developing just the XML files I frequently removed generated output prior to running ~gsl~ although this heavy hand is not strictly needed.
+
+* The Zyre Peer Codec
+
+A zproto codec is defined in a zproto XML file with  ~zproto_codec_c~ specified in the ~script~ attribute of ~<class>~.  It includes a number of ~<message>~ elements each with a number of ~<field>~ elements.  It is important to understand that a *single codec class* spans all message types and that all fields are in a flat namesakes.  The codec code is generated so that it has a set of fields which are the union of all message types.  Thus, one must define message types so that conceptually common fields use identical names.  User code using the generated codec CLASS code then must take care to check the message type ID and only call those /get methods/ that correspond.  I don't know what happens when one gets a value of a field not part of the current message, but it's probably not good.
+
+In the case of the example ~dax_chirp_msg.xml~ codec, because it will be used with  the ~zproto_zyrepeer_c~ state machine it must include a ~virtual = "1"~  attribute in the ~<class>~ element.  This is an internal detail but it is because the generated Zyre peer code uses the codec against an already existing ~zmsg_t~ (the one to/from Zyre) instead of asking the codec to do its ~send/recv~ from a ~zsock_t~.
+
+There are three conceptual categories of message types that may be defined in the codec used by the Zyre peer:
+
+- Zyre events :: the peer codec XML must define a message for each corresping Zyre event in the codec.  Their names must be the concatenation of ~ZYRE_~ and the Zyre event name (eg, ~ZYRE_ENTER~).
+- Peer events :: any message type which is considered part of the protocol needs to be defined.  
+- Injected events :: events can be injected from the peer API and sent up the command pipe to the peer actor.  
+
+All Zyre and Peer event messages require a ~uuid~ and ~name~ field.   If any Zyre event is not defined in the codec it will lead to an error.
+
+#+BEGIN_QUOTE
+FIXME: what is the deal with handling of the ~group~ field.
+#+END_QUOTE
+
+Injected events may be sent to the peer actor by user code, either by explicitly sending to the command pipe or more friendly, through a peer API method, if available.  See discussion on methods below.
+
+* The Zyre Peer CLASS
+
+A peer CLASS is defined in an XML file with a ~script = "zproto_zyrepeer_c"~ attribute of the ~<class>~ element.  It must have a ~protocol_class~ attribute pointing at a codec as described above.  A number of ~<state>~ and ~<method>~ sub-elements may be defined.  
+
+The *states* are used to define a state machine to process codec messages.  Each state is named and defines a number of ~<event>~ sub-elements The *event* binds a message type and a next state and a number of actions.  When a message of that type is encountered while in the parent state then the next state will be entered after the actions have been performed.
+
+The *action* has a ~name~ attribute and a number of action-specific arguments.  An action maps onto a C function which is either a built-in provided by the GSL script explicitly or which will be generated as a skeleton and left to the human developer to fill in.  The actions built-in to ~zproto_zyrepeer_c~ are:
+
+- send :: cause the peer to send a message via Zyre "shout" or "whisper"
+- join :: cause the peer to join a group
+- ingest :: cause the current message to be sent down the actor's ~msgpipe~
+- terminate :: cause the peer to stop
+
+The *methods* are available to inject state machine events from user code.  A method name is chosen freely but should semantically evoke a notion of a command.  It's field names must match the codec fields.  A method is "100% generated" and is associated with state machine event of the same name but capitalized.  If no such event is used in the state machine then they are effectively no-ops.  User code may run in response to such injected events (as in all events) by naming some *action* and then implementing the generated method skeleton (eg, see bottom of ~src/dax_chirp_peer.c~).
+
+One note, while these methods present a user API to the peer do not confuse them with explicit APIs defined in ~api/*.xml~.  The peer methods are just saving the user from the chore of explicitly talking to the actor command pipe. 
+
