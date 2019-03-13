@@ -34,7 +34,7 @@ typedef struct _dax_chirp_peer_t dax_chirp_peer_t;
 //  Create a new dax_chirp_peer, return the reference if successful, or NULL
 //  if construction failed due to lack of available memory.
 dax_chirp_peer_t *
-    dax_chirp_peer_new (void);
+    dax_chirp_peer_new (const char* zname);
 
 //  Destroy the dax_chirp_peer and free all memory used by the object.
 void
@@ -53,9 +53,7 @@ zactor_t *
 zsock_t *
     dax_chirp_peer_msgpipe (dax_chirp_peer_t *self);
 
-//  Return true if client is currently connected, else false. Note that the
-//  client will automatically re-connect if the server dies and restarts after
-//  a successful first connection.
+//  Return true if peer is currently connected, else false.
 bool
     dax_chirp_peer_connected (dax_chirp_peer_t *self);
 

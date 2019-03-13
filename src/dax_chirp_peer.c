@@ -18,11 +18,11 @@
 #include "../include/dax_chirp_peer.h"
 
 //  Forward reference to method arguments structure
-typedef struct _client_args_t client_args_t;
+typedef struct _peer_args_t peer_args_t;
 
-//  This structure defines the context for a client connection
+//  This structure defines the context for a peer connection
 typedef struct {
-    //  These properties must always be present in the client_t
+    //  These properties must always be present in the peer_t
     //  and are set by the generated engine. The cmdpipe gets
     //  messages sent to the actor; the msgpipe may be used for
     //  faster asynchronous message flows.
@@ -31,27 +31,27 @@ typedef struct {
     //zsock_t *dealer;            //  Socket to talk to server
     zyre_t* zyre;
     dax_chirp_msg_t *message;   //  Message to/from server
-    client_args_t *args;        //  Arguments from methods
+    peer_args_t *args;        //  Arguments from methods
 
     //  TODO: Add specific properties for your application
-} client_t;
+} peer_t;
 
-//  Include the generated client engine
+//  Include the generated peer engine
 #include "dax_chirp_peer_engine.inc"
 
-//  Allocate properties and structures for a new client instance.
+//  Allocate properties and structures for a new peer instance.
 //  Return 0 if OK, -1 if failed
 
 static int
-client_initialize (client_t *self)
+peer_initialize (peer_t *self)
 {
     return 0;
 }
 
-//  Free properties and structures for a client instance
+//  Free properties and structures for a peer instance
 
 static void
-client_terminate (client_t *self)
+peer_terminate (peer_t *self)
 {
     //  Destroy properties here
 }
@@ -69,9 +69,16 @@ dax_chirp_peer_test (bool verbose)
 
     //  @selftest
     // TODO: fill this out
-    dax_chirp_peer_t *client = dax_chirp_peer_new ();
-    dax_chirp_peer_set_verbose(client, verbose);
-    dax_chirp_peer_destroy (&client);
+    dax_chirp_peer_t *peer1 = dax_chirp_peer_new ("test1");
+    dax_chirp_peer_t *peer2 = dax_chirp_peer_new ("test2");
+    dax_chirp_peer_set_verbose(peer1, verbose);
+    dax_chirp_peer_set_verbose(peer2, verbose);
+
+    // simulate some application "work"
+    zclock_sleep(2);
+
+    dax_chirp_peer_destroy (&peer1);
+    dax_chirp_peer_destroy (&peer2);
     //  @end
     printf ("OK\n");
 }
@@ -82,6 +89,6 @@ dax_chirp_peer_test (bool verbose)
 //
 
 static void
-join (client_t *self)
+join (peer_t *self)
 {
 }

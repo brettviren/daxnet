@@ -49,28 +49,27 @@ s_event_name [] = {
 
 
 //  ---------------------------------------------------------------------------
-//  Context for the client. This embeds the application-level client context
+//  Context for the peer. This embeds the application-level peer context
 //  at its start (the entire structure, not a reference), so we can cast a
-//  pointer between client_t and s_client_t arbitrarily.
+//  pointer between peer_t and s_peer_t arbitrarily.
 
 //  These are the different method arguments we manage automatically
-struct _client_args_t {
+struct _peer_args_t {
     int struct_cannot_be_empty;
 };
 
 typedef struct {
-    client_t client;            //  Application-level client context
+    peer_t peer;                //  Application-level peer context
     zsock_t *cmdpipe;           //  Get/send commands from caller API
     zsock_t *msgpipe;           //  Get/send messages from caller API
     //zsock_t *dealer;            //  Socket to talk to server
     zyre_t *zyre;               // The zyre node
-    char*   zyre_name;          // The zyre node name
     zloop_t *loop;              //  Listen to pipe and zyre
     dax_chirp_msg_t *message;   //  Message received or sent
-    client_args_t args;         //  Method arguments structure
+    peer_args_t args;         //  Method arguments structure
     bool verbose;               //  True if we're tracing state machine
-    bool connected;             //  True if client is connected
-    bool terminated;            //  True if client is shutdown
+    bool connected;             //  True if peer is connected
+    bool terminated;            //  True if peer is shutdown
     bool fsm_stopped;           //  "terminate" action called
     size_t expiry;              //  Expiry timer, msecs
     size_t heartbeat;           //  Heartbeat timer, msecs
@@ -83,31 +82,31 @@ typedef struct {
     int heartbeat_timer;        //  zloop timer for heartbeat
     event_t wakeup_event;       //  Wake up with this event
     char log_prefix [41];       //  Log prefix string
-} s_client_t;
+} s_peer_t;
 
 static int
-    client_initialize (client_t *self);
+    peer_initialize (peer_t *self);
 static void
-    client_terminate (client_t *self);
+    peer_terminate (peer_t *self);
 static void
-    s_client_destroy (s_client_t **self_p);
+    s_peer_destroy (s_peer_t **self_p);
 static void
-    s_client_execute (s_client_t *self, event_t event);
+    s_peer_execute (s_peer_t *self, event_t event);
 static int
-    s_client_handle_wakeup (zloop_t *loop, int timer_id, void *argument);
+    s_peer_handle_wakeup (zloop_t *loop, int timer_id, void *argument);
 static void
     s_satisfy_pedantic_compilers (void);
 static void
-    join (client_t *self);
+    join (peer_t *self);
 
-//  Create a new client connection
+//  Create a new peer connection
 
-static s_client_t *
-s_client_new (zsock_t *cmdpipe, zsock_t *msgpipe)
+static s_peer_t *
+s_peer_new (zsock_t *cmdpipe, zsock_t *msgpipe)
 {
-    s_client_t *self = (s_client_t *) zmalloc (sizeof (s_client_t));
+    s_peer_t *self = (s_peer_t *) zmalloc (sizeof (s_peer_t));
     if (self) {
-        assert ((s_client_t *) &self->client == self);
+        assert ((s_peer_t *) &self->peer == self);
         self->cmdpipe = cmdpipe;
         self->msgpipe = msgpipe;
         self->state = start_state;
@@ -116,7 +115,6 @@ s_client_new (zsock_t *cmdpipe, zsock_t *msgpipe)
             "%6d:%-33s", randof (1000000), "dax_chirp_peer");
         //self->dealer = zsock_new (ZMQ_DEALER);
         //if (self->dealer)
-        self->zyre_name = NULL;
         self->zyre = zyre_new(NULL);
         if (self->zyre)
             self->message = dax_chirp_msg_new ();
@@ -124,37 +122,35 @@ s_client_new (zsock_t *cmdpipe, zsock_t *msgpipe)
             self->loop = zloop_new ();
         if (self->loop) {
             //  Give application chance to initialize and set next event
-            self->client.cmdpipe = self->cmdpipe;
-            self->client.msgpipe = self->msgpipe;
-            //self->client.dealer = self->dealer;
-            self->client.zyre = self->zyre;
-            self->client.message = self->message;
-            self->client.args = &self->args;
-            if (client_initialize (&self->client))
-                s_client_destroy (&self);
+            self->peer.cmdpipe = self->cmdpipe;
+            self->peer.msgpipe = self->msgpipe;
+            //self->peer.dealer = self->dealer;
+            self->peer.zyre = self->zyre;
+            self->peer.message = self->message;
+            self->peer.args = &self->args;
+            if (peer_initialize (&self->peer))
+                s_peer_destroy (&self);
         }
         else
-            s_client_destroy (&self);
+            s_peer_destroy (&self);
     }
     s_satisfy_pedantic_compilers ();
     return self;
 }
 
-//  Destroy the client connection
+//  Destroy the peer connection
 
 static void
-s_client_destroy (s_client_t **self_p)
+s_peer_destroy (s_peer_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
-        s_client_t *self = *self_p;
-        client_terminate (&self->client);
+        s_peer_t *self = *self_p;
+        peer_terminate (&self->peer);
         dax_chirp_msg_destroy (&self->message);
         zsock_destroy (&self->msgpipe);
         //zsock_destroy (&self->dealer);
         zyre_destroy(&self->zyre);
-        if (self->zyre_name)
-            free(self->zyre_name);
         zloop_destroy (&self->loop);
         free (self);
         *self_p = NULL;
@@ -169,10 +165,10 @@ s_client_destroy (s_client_t **self_p)
 //  dealer socket and treat that as the event.
 
 static void
-engine_set_next_event (client_t *client, event_t event)
+engine_set_next_event (peer_t *peer, event_t event)
 {
-    if (client) {
-        s_client_t *self = (s_client_t *) client;
+    if (peer) {
+        s_peer_t *self = (s_peer_t *) peer;
         self->next_event = event;
     }
 }
@@ -181,10 +177,10 @@ engine_set_next_event (client_t *client, event_t event)
 //  Continues execution of actions defined for the exception event.
 
 static void
-engine_set_exception (client_t *client, event_t event)
+engine_set_exception (peer_t *peer, event_t event)
 {
-    if (client) {
-        s_client_t *self = (s_client_t *) client;
+    if (peer) {
+        s_peer_t *self = (s_peer_t *) peer;
         self->exception = event;
     }
 }
@@ -193,16 +189,16 @@ engine_set_exception (client_t *client, event_t event)
 //  wakeup event. The alarm is cancelled on any other event.
 
 static void
-engine_set_wakeup_event (client_t *client, size_t delay, event_t event)
+engine_set_wakeup_event (peer_t *peer, size_t delay, event_t event)
 {
-    if (client) {
-        s_client_t *self = (s_client_t *) client;
+    if (peer) {
+        s_peer_t *self = (s_peer_t *) peer;
         if (self->wakeup_timer) {
             zloop_timer_end (self->loop, self->wakeup_timer);
             self->wakeup_timer = 0;
         }
         self->wakeup_timer = zloop_timer (
-            self->loop, delay, 1, s_client_handle_wakeup, self);
+            self->loop, delay, 1, s_peer_handle_wakeup, self);
         self->wakeup_event = event;
     }
 }
@@ -210,13 +206,13 @@ engine_set_wakeup_event (client_t *client, size_t delay, event_t event)
 //  Set a heartbeat timer. The interval is in msecs and must be
 //  non-zero. The state machine must handle the "heartbeat" event.
 //  The heartbeat happens every interval no matter what traffic the
-//  client is sending or receiving.
+//  peer is sending or receiving.
 
 static void
-engine_set_heartbeat (client_t *client, size_t heartbeat)
+engine_set_heartbeat (peer_t *peer, size_t heartbeat)
 {
-    if (client) {
-        s_client_t *self = (s_client_t *) client;
+    if (peer) {
+        s_peer_t *self = (s_peer_t *) peer;
         self->heartbeat = heartbeat;
     }
 }
@@ -231,22 +227,22 @@ engine_set_heartbeat (client_t *client, size_t heartbeat)
 #define engine_set_timeout engine_set_expiry
 
 static void
-engine_set_expiry (client_t *client, size_t expiry)
+engine_set_expiry (peer_t *peer, size_t expiry)
 {
-    if (client) {
-        s_client_t *self = (s_client_t *) client;
+    if (peer) {
+        s_peer_t *self = (s_peer_t *) peer;
         self->expiry = expiry;
     }
 }
 
 //  Poll socket for activity, invoke handler on any received message.
-//  Handler must be a CZMQ zloop_fn function; receives client as arg.
+//  Handler must be a CZMQ zloop_fn function; receives peer as arg.
 
 static void
-engine_handle_socket (client_t *client, zsock_t *sock, zloop_reader_fn handler)
+engine_handle_socket (peer_t *peer, zsock_t *sock, zloop_reader_fn handler)
 {
-    if (client && sock) {
-        s_client_t *self = (s_client_t *) client;
+    if (peer && sock) {
+        s_peer_t *self = (s_peer_t *) peer;
         if (handler != NULL) {
             int rc = zloop_reader (self->loop, sock, handler, self);
             assert (rc == 0);
@@ -257,14 +253,14 @@ engine_handle_socket (client_t *client, zsock_t *sock, zloop_reader_fn handler)
     }
 }
 
-//  Set connected to true/false. The client must call this if it wants
+//  Set connected to true/false. The peer must call this if it wants
 //  to provide the API with the connected status.
 
 static void
-engine_set_connected (client_t *client, bool connected)
+engine_set_connected (peer_t *peer, bool connected)
 {
-    if (client) {
-        s_client_t *self = (s_client_t *) client;
+    if (peer) {
+        s_peer_t *self = (s_peer_t *) peer;
         self->connected = connected;
     }
 }
@@ -290,7 +286,7 @@ s_satisfy_pedantic_compilers (void)
 //  TODO: replace with lookup table, since ID is one byte
 
 static event_t
-s_protocol_event (s_client_t *self, dax_chirp_msg_t *message)
+s_protocol_event (s_peer_t *self, dax_chirp_msg_t *message)
 {
     assert (message);
     switch (dax_chirp_msg_id (message)) {
@@ -319,7 +315,7 @@ s_protocol_event (s_client_t *self, dax_chirp_msg_t *message)
 //  or state machine is stopped, do nothing.
 
 static void
-s_client_execute (s_client_t *self, event_t event)
+s_peer_execute (s_peer_t *self, event_t event)
 {
     self->next_event = event;
     //  Cancel wakeup timer, if any was pending
@@ -420,13 +416,13 @@ s_client_execute (s_client_t *self, event_t event)
     }
 }
 
-//  zloop callback when client wakeup timer expires
+//  zloop callback when peer wakeup timer expires
 
 static int
-s_client_handle_wakeup (zloop_t *loop, int timer_id, void *argument)
+s_peer_handle_wakeup (zloop_t *loop, int timer_id, void *argument)
 {
-    s_client_t *self = (s_client_t *) argument;
-    s_client_execute (self, self->wakeup_event);
+    s_peer_t *self = (s_peer_t *) argument;
+    s_peer_execute (self, self->wakeup_event);
     return 0;
 }
 
@@ -434,9 +430,9 @@ s_client_handle_wakeup (zloop_t *loop, int timer_id, void *argument)
 //  Handle command pipe to/from calling API
 
 static int
-s_client_handle_cmdpipe (zloop_t *loop, zsock_t *reader, void *argument)
+s_peer_handle_cmdpipe (zloop_t *loop, zsock_t *reader, void *argument)
 {
-    s_client_t *self = (s_client_t *) argument;
+    s_peer_t *self = (s_peer_t *) argument;
     char *method = zstr_recv (self->cmdpipe);
     if (!method)
         return -1;                  //  Interrupted; exit zloop
@@ -451,6 +447,12 @@ s_client_handle_cmdpipe (zloop_t *loop, zsock_t *reader, void *argument)
     else
     if (streq (method, "SET VERBOSE"))
         zsock_recv (self->cmdpipe, "i", &self->verbose);
+    else if (streq (method, "SET NAME")) {
+        char* zname=0;
+        zsock_recv (self->cmdpipe, "s", &zname);
+        zyre_set_name(self->zyre, zname);
+        free (zname);
+    }
     //  Cleanup pipe if any argument frames are still waiting to be eaten
     if (zsock_rcvmore (self->cmdpipe)) {
         zsys_error ("%s: trailing API command frames (%s)",
@@ -467,9 +469,9 @@ s_client_handle_cmdpipe (zloop_t *loop, zsock_t *reader, void *argument)
 //  Handle message pipe to/from calling API
 
 static int
-s_client_handle_msgpipe (zloop_t *loop, zsock_t *reader, void *argument)
+s_peer_handle_msgpipe (zloop_t *loop, zsock_t *reader, void *argument)
 {
-    s_client_t *self = (s_client_t *) argument;
+    s_peer_t *self = (s_peer_t *) argument;
 
     //  We will process as many messages as we can, to reduce the overhead
     //  of polling and the reactor:
@@ -502,9 +504,9 @@ s_client_handle_msgpipe (zloop_t *loop, zsock_t *reader, void *argument)
 //  Handle a message (a protocol reply) from the server
 
 static int
-s_client_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
+s_peer_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
 {
-    s_client_t *self = (s_client_t *) argument;
+    s_peer_t *self = (s_peer_t *) argument;
 
     //  We will process as many messages as we can, to reduce the overhead
     //  of polling and the reactor:
@@ -554,7 +556,7 @@ s_client_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
 
         dax_chirp_msg_set_uuid (self->message,strdup(zyre_event_peer_uuid(event)));
         dax_chirp_msg_set_name (self->message,strdup(zyre_event_peer_name(event)));
-        s_client_execute (self, s_protocol_event (self, self->message));
+        s_peer_execute (self, s_protocol_event (self, self->message));
         zyre_event_destroy(&event);
         if (self->terminated)
             return -1;
@@ -564,28 +566,27 @@ s_client_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
 
 
 //  ---------------------------------------------------------------------------
-//  This is the client actor, which polls its two sockets and processes
+//  This is the peer actor, which polls its two sockets and processes
 //  incoming messages
 
 void
 dax_chirp_peer (zsock_t *cmdpipe, void *msgpipe)
 {
     //  Initialize
-    s_client_t *self = s_client_new (cmdpipe, (zsock_t *) msgpipe);
+    s_peer_t *self = s_peer_new (cmdpipe, (zsock_t *) msgpipe);
     if (self && zyre_start(self->zyre) == 0) {
-        self->zyre_name  = strdup (zyre_name (self->zyre));
         zsock_signal (cmdpipe, 0);
 
-        //  Set up handler for the sockets the client uses
-        engine_handle_socket ((client_t *) self, self->cmdpipe, s_client_handle_cmdpipe);
-        engine_handle_socket ((client_t *) self, self->msgpipe, s_client_handle_msgpipe);
-        //engine_handle_socket ((client_t *) self, self->dealer, s_client_handle_protocol);
-        engine_handle_socket ((client_t *) self, zyre_socket (self->zyre), s_client_handle_protocol);
+        //  Set up handler for the sockets the peer uses
+        engine_handle_socket ((peer_t *) self, self->cmdpipe, s_peer_handle_cmdpipe);
+        engine_handle_socket ((peer_t *) self, self->msgpipe, s_peer_handle_msgpipe);
+        //engine_handle_socket ((peer_t *) self, self->dealer, s_peer_handle_protocol);
+        engine_handle_socket ((peer_t *) self, zyre_socket (self->zyre), s_peer_handle_protocol);
         //  Run reactor until there's a termination signal
         zloop_start (self->loop);
 
         //  Reactor has ended
-        s_client_destroy (&self);
+        s_peer_destroy (&self);
     }
     else
         zsock_signal (cmdpipe, -1);
@@ -596,9 +597,9 @@ dax_chirp_peer (zsock_t *cmdpipe, void *msgpipe)
 //  Class interface
 
 struct _dax_chirp_peer_t {
-    zactor_t *actor;            //  Client actor
+    zactor_t *actor;            //  Peer actor
     zsock_t *msgpipe;           //  Pipe for async message flow
-    bool connected;             //  Client currently connected or not
+    bool connected;             //  Peer currently connected or not
 };
 
 
@@ -606,17 +607,20 @@ struct _dax_chirp_peer_t {
 //  Create a new dax_chirp_peer
 
 dax_chirp_peer_t *
-dax_chirp_peer_new (void)
+dax_chirp_peer_new (const char* zname)
 {
     dax_chirp_peer_t *self = (dax_chirp_peer_t *) zmalloc (sizeof (dax_chirp_peer_t));
-    if (self) {
-        zsock_t *backend;
-        self->msgpipe = zsys_create_pipe (&backend);
-        if (self->msgpipe)
-            self->actor = zactor_new (dax_chirp_peer, backend);
-        if (!self->actor)
-            dax_chirp_peer_destroy (&self);
-    }
+    if (!self) return self;
+
+    zsock_t *backend;
+    self->msgpipe = zsys_create_pipe (&backend);
+    if (self->msgpipe)
+        self->actor = zactor_new (dax_chirp_peer, backend);
+    if (!self->actor)
+        dax_chirp_peer_destroy (&self);
+    if (zname)
+        zstr_sendx(self->actor, "SET NAME", zname, NULL);
+
     return self;
 }
 
