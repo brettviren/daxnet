@@ -386,7 +386,7 @@ endif
 .for class.send
 .   for message as method
     <method name = "$(.method)">
-        Send $(name:) message to server, takes ownership of message
+        Send $(name:) message to other peer, takes ownership of message
         and destroys message when done sending it.
 .   for field
         <argument name = "$(name)" type = "$(zproject_type)"\
@@ -406,12 +406,12 @@ endif
 .for class.recv
 .   if recv.virtual ?= 0
     <method name = "recv">
-        Receive message from server; Returns >= 0 if successful, -1 if interrupted.
+        Receive message from other peer; Returns >= 0 if successful, -1 if interrupted.
         <return type = "integer" />
     </method>
 .else
     <method name = "recv">
-        Receive message from server; caller destroys message when done
+        Receive message from other peer; caller destroys message when done
         <return type = "zmsg" fresh = "1" />
     </method>
 .   endif
@@ -544,7 +544,7 @@ $(CLASS.EXPORT_MACRO)$(ctype)
 .endfor
 .for class.send
 .   for message as method
-//  Send $(name:) message to server, takes ownership of message
+//  Send $(name:) message to other peer, takes ownership of message
 //  and destroys message when done sending it.
 $(CLASS.EXPORT_MACRO)int
     $(class.name)_$(.method:c) ($(class.name)_t *self$(args));
@@ -553,11 +553,11 @@ $(CLASS.EXPORT_MACRO)int
 .endfor
 .for class.recv
 .   if recv.virtual = 0
-//  Receive message from server; Returns >= 0 if successful, -1 if interrupted.
+//  Receive message from other peer; Returns >= 0 if successful, -1 if interrupted.
 $(CLASS.EXPORT_MACRO)int
     $(class.name)_recv ($(class.name)_t *self);
 .   else
-//  Receive message from server; caller destroys message when done
+//  Receive message from other peer; caller destroys message when done
 $(CLASS.EXPORT_MACRO)zmsg_t *
     $(class.name)_recv ($(class.name)_t *self);
 .   endif
@@ -964,7 +964,7 @@ s_protocol_event (s_peer_t *self, $(proto)_t *message)
                                 self->log_prefix);
                         $(proto)_set_id (self->message, $(PROTO)_$(MESSAGE:C));
 .               if switches.trace ?= 1
-                        zsys_debug ("%s: Send message to server", self->log_prefix);
+                        zsys_debug ("%s: Send message to other peer", self->log_prefix);
                         $(proto)_print (self->message);
 .               endif
                         //$(proto)_send (self->message, self->dealer);
@@ -1258,7 +1258,7 @@ s_peer_handle_msgpipe (zloop_t *loop, zsock_t *reader, void *argument)
 }
 
 
-//  Handle a message (a protocol reply) from the server
+//  Handle a message (a protocol reply) from another peer
 
 static int
 s_peer_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
@@ -1280,7 +1280,7 @@ s_peer_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
         $(proto)_print (self->message);
 .endif
 .if count (class.event, name = "expired")
-        //  Any input from server counts as activity
+        //  Any input from other peer counts as activity
         if (self->expiry_timer) {
             zloop_timer_end (self->loop, self->expiry_timer);
             self->expiry_timer = 0;
@@ -1483,7 +1483,7 @@ $(class.name)_msgpipe ($(class.name)_t *self)
 
 //  ---------------------------------------------------------------------------
 //  Return true if peer is currently connected, else false. Note that the
-//  peer will automatically re-connect if the server dies and restarts after
+//  peer will automatically re-connect if the other peer dies and restarts after
 //  a successful first connection.
 
 bool
@@ -1617,7 +1617,7 @@ $(class.name)_$(name:c) ($(class.name)_t *self$(args))
 
 
 //  ---------------------------------------------------------------------------
-//  Send $(name:) message to server, takes ownership of message and
+//  Send $(name:) message to other peer, takes ownership of message and
 //  destroys when done sending it.
 
 int
@@ -1646,7 +1646,7 @@ $(class.name)_$(.method:c) ($(class.name)_t *self$(args))
 
 
 //  ---------------------------------------------------------------------------
-//  Receive message from server; caller destroys message when done
+//  Receive message from other peer; caller destroys message when done
 
 .   if recv.virtual = 0
 int
@@ -1785,7 +1785,7 @@ typedef struct {
     zsock_t *msgpipe;           //  Message pipe to/from caller API
     //zsock_t *dealer;            //  Socket to talk to server
     zyre_t* zyre;
-    $(proto)_t *message;        //  Message to/from server
+    $(proto)_t *message;        //  Message to/from other peer
     peer_args_t *args;        //  Arguments from methods
 
     //  TODO: Add specific properties for your application

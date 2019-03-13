@@ -57,6 +57,11 @@ zsock_t *
 bool
     dax_chirp_peer_connected (dax_chirp_peer_t *self);
 
+//  Client interface for sending a message into the state machine to broadcast to
+//  the group
+int
+    dax_chirp_peer_send_chat (dax_chirp_peer_t *self, const char *message);
+
 //  Enable verbose tracing (animation) of state machine activity.
 void
     dax_chirp_peer_set_verbose (dax_chirp_peer_t *self, bool verbose);

@@ -27,6 +27,11 @@ messages "group".
 
 
 
+A message sent from the API injected into the state machine.
+
+
+
+
 Whisper messages will be populated by the identity information of
 the peer that is whispering
 
@@ -37,10 +42,57 @@ Must also handle Zyre events
         name                string      Name of the sender
         group               string      Group this message was sent to
 
+    SEND_CHAT - This is a test message for Zyre based protocols.
+
+Messages must specify at least "uuid" and "name" and shouted
+messages "group".
+
+
+
+A message sent from the API injected into the state machine.
+
+
+
+
+Whisper messages will be populated by the identity information of
+the peer that is whispering
+
+
+
+Must also handle Zyre events
+        message             string      Chat message to this group
+
+    CHAT - This is a test message for Zyre based protocols.
+
+Messages must specify at least "uuid" and "name" and shouted
+messages "group".
+
+
+
+A message sent from the API injected into the state machine.
+
+
+
+
+Whisper messages will be populated by the identity information of
+the peer that is whispering
+
+
+
+Must also handle Zyre events
+        uuid                string      UUID of the sender
+        name                string      Name of the sender
+        message             string      Chat message to this group
+
     WORLD - This is a test message for Zyre based protocols.
 
 Messages must specify at least "uuid" and "name" and shouted
 messages "group".
+
+
+
+A message sent from the API injected into the state machine.
+
 
 
 
@@ -78,6 +130,11 @@ messages "group".
 
 
 
+A message sent from the API injected into the state machine.
+
+
+
+
 Whisper messages will be populated by the identity information of
 the peer that is whispering
 
@@ -94,13 +151,15 @@ Must also handle Zyre events
 
 
 #define DAX_CHIRP_MSG_HELLO                 1
-#define DAX_CHIRP_MSG_WORLD                 2
-#define DAX_CHIRP_MSG_ZYRE_ENTER            3
-#define DAX_CHIRP_MSG_ZYRE_JOIN             4
-#define DAX_CHIRP_MSG_ZYRE_LEAVE            5
-#define DAX_CHIRP_MSG_ZYRE_EXIT             6
-#define DAX_CHIRP_MSG_ZYRE_STOP             7
-#define DAX_CHIRP_MSG_ZYRE_EVASIVE          8
+#define DAX_CHIRP_MSG_SEND_CHAT             2
+#define DAX_CHIRP_MSG_CHAT                  3
+#define DAX_CHIRP_MSG_WORLD                 4
+#define DAX_CHIRP_MSG_ZYRE_ENTER            5
+#define DAX_CHIRP_MSG_ZYRE_JOIN             6
+#define DAX_CHIRP_MSG_ZYRE_LEAVE            7
+#define DAX_CHIRP_MSG_ZYRE_EXIT             8
+#define DAX_CHIRP_MSG_ZYRE_STOP             9
+#define DAX_CHIRP_MSG_ZYRE_EVASIVE          10
 
 #include <czmq.h>
 
@@ -182,6 +241,12 @@ const char *
     dax_chirp_msg_group (dax_chirp_msg_t *self);
 void
     dax_chirp_msg_set_group (dax_chirp_msg_t *self, const char *value);
+
+//  Get/set the message field
+const char *
+    dax_chirp_msg_message (dax_chirp_msg_t *self);
+void
+    dax_chirp_msg_set_message (dax_chirp_msg_t *self, const char *value);
 
 //  Get a copy of the headers field
 zhash_t *

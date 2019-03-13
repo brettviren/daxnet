@@ -75,7 +75,11 @@ dax_chirp_peer_test (bool verbose)
     dax_chirp_peer_set_verbose(peer2, verbose);
 
     // simulate some application "work"
-    zclock_sleep(2);
+    zclock_sleep(1000);
+    dax_chirp_peer_send_chat(peer1, "chat to peer1");
+    zclock_sleep(1000);
+    dax_chirp_peer_send_chat(peer2, "chat to peer2");
+    zclock_sleep(1000);
 
     dax_chirp_peer_destroy (&peer1);
     dax_chirp_peer_destroy (&peer2);
@@ -90,5 +94,25 @@ dax_chirp_peer_test (bool verbose)
 
 static void
 join (peer_t *self)
+{
+}
+
+
+//  ---------------------------------------------------------------------------
+//  generate_chat_message
+//
+
+static void
+generate_chat_message (peer_t *self)
+{
+}
+
+
+//  ---------------------------------------------------------------------------
+//  output_chat_message
+//
+
+static void
+output_chat_message (peer_t *self)
 {
 }

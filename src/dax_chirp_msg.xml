@@ -18,6 +18,20 @@
     <field name = "group" type = "string">Group this message was sent to</field>
   </message>
   
+  A message sent from the API injected into the state machine.
+
+  <message name = "SEND CHAT" >
+    <field name = "message" type = "string">Chat message to this group</field>
+  </message>
+
+  <message name = "CHAT" >
+    <field name = "uuid" type = "string">UUID of the sender</field>
+    <field name = "name" type = "string">Name of the sender</field>
+    <field name = "message" type = "string">Chat message to this group</field>
+
+  </message>
+
+
   Whisper messages will be populated by the identity information of
   the peer that is whispering
   

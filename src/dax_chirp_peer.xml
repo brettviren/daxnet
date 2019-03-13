@@ -32,8 +32,22 @@
       A peer is welcoming another peer to the network
     </event>
 
+    <event name = "SEND CHAT">
+      The client is requesting a chat message, package it up and shout it out
+      <action name = "generate chat message"/>
+      <action name = "send" cast = "shout" group = "CHAT" message = "CHAT"/>
+    </event>
+    <event name = "CHAT">
+      Another node has sent a chat message, output the contents to the user 
+      <action name = "output chat message"/>
+    </event>
+
   </state>
 
-  
+  <method name = "send chat">
+    Client interface for sending a message into the state machine to broadcast to the group
+    <field name = "message" type = "string" />
+  </method>
+    
 
 </class>
