@@ -19,7 +19,8 @@ if ENABLE_DRAFTS
 src_libdax_la_SOURCES += \
     src/dax_ident.c \
     src/dax_chirp_msg.c \
-    src/dax_chirp_peer.c
+    src/dax_chirp_peer.c \
+    src/dax_chirp_peer_engine.inc
 
 endif
 

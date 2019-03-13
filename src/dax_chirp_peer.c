@@ -1,81 +1,87 @@
 /*  =========================================================================
-    dax_chirp_peer - class description
+    dax_chirp_peer - DAX Chirp peer
 
-    LGPL3, boilerplate to come.
     =========================================================================
 */
 
 /*
 @header
-    dax_chirp_peer -
+    Description of class for man page.
 @discuss
+    Detailed discussion of the class, if any.
 @end
 */
 
 #include "dax_classes.h"
+//  TODO: Change these to match your project's needs
+#include "../include/dax_chirp_msg.h"
+#include "../include/dax_chirp_peer.h"
 
-//  Structure of our class
+//  Forward reference to method arguments structure
+typedef struct _client_args_t client_args_t;
 
-struct _dax_chirp_peer_t {
-    int filler;     //  Declare class properties here
-};
+//  This structure defines the context for a client connection
+typedef struct {
+    //  These properties must always be present in the client_t
+    //  and are set by the generated engine. The cmdpipe gets
+    //  messages sent to the actor; the msgpipe may be used for
+    //  faster asynchronous message flows.
+    zsock_t *cmdpipe;           //  Command pipe to/from caller API
+    zsock_t *msgpipe;           //  Message pipe to/from caller API
+    //zsock_t *dealer;            //  Socket to talk to server
+    zyre_t* zyre;
+    dax_chirp_msg_t *message;   //  Message to/from server
+    client_args_t *args;        //  Arguments from methods
 
+    //  TODO: Add specific properties for your application
+} client_t;
 
-//  --------------------------------------------------------------------------
-//  Create a new dax_chirp_peer
+//  Include the generated client engine
+#include "dax_chirp_peer_engine.inc"
 
-dax_chirp_peer_t *
-dax_chirp_peer_new (void)
+//  Allocate properties and structures for a new client instance.
+//  Return 0 if OK, -1 if failed
+
+static int
+client_initialize (client_t *self)
 {
-    dax_chirp_peer_t *self = (dax_chirp_peer_t *) zmalloc (sizeof (dax_chirp_peer_t));
-    assert (self);
-    //  Initialize class properties here
-    return self;
+    return 0;
+}
+
+//  Free properties and structures for a client instance
+
+static void
+client_terminate (client_t *self)
+{
+    //  Destroy properties here
 }
 
 
-//  --------------------------------------------------------------------------
-//  Destroy the dax_chirp_peer
-
-void
-dax_chirp_peer_destroy (dax_chirp_peer_t **self_p)
-{
-    assert (self_p);
-    if (*self_p) {
-        dax_chirp_peer_t *self = *self_p;
-        //  Free class properties here
-        //  Free object itself
-        free (self);
-        *self_p = NULL;
-    }
-}
-
-//  --------------------------------------------------------------------------
-//  Self test of this class
-
-// If your selftest reads SCMed fixture data, please keep it in
-// src/selftest-ro; if your test creates filesystem objects, please
-// do so under src/selftest-rw.
-// The following pattern is suggested for C selftest code:
-//    char *filename = NULL;
-//    filename = zsys_sprintf ("%s/%s", SELFTEST_DIR_RO, "mytemplate.file");
-//    assert (filename);
-//    ... use the "filename" for I/O ...
-//    zstr_free (&filename);
-// This way the same "filename" variable can be reused for many subtests.
-#define SELFTEST_DIR_RO "src/selftest-ro"
-#define SELFTEST_DIR_RW "src/selftest-rw"
+//  ---------------------------------------------------------------------------
+//  Selftest
 
 void
 dax_chirp_peer_test (bool verbose)
 {
     printf (" * dax_chirp_peer: ");
+    if (verbose)
+        printf ("\n");
 
     //  @selftest
-    //  Simple create/destroy test
-    dax_chirp_peer_t *self = dax_chirp_peer_new ();
-    assert (self);
-    dax_chirp_peer_destroy (&self);
+    // TODO: fill this out
+    dax_chirp_peer_t *client = dax_chirp_peer_new ();
+    dax_chirp_peer_set_verbose(client, verbose);
+    dax_chirp_peer_destroy (&client);
     //  @end
     printf ("OK\n");
+}
+
+
+//  ---------------------------------------------------------------------------
+//  join
+//
+
+static void
+join (client_t *self)
+{
 }

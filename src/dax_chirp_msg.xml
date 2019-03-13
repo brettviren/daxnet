@@ -1,5 +1,5 @@
 <class
-    name = "dax_chirp_msg.xml"
+    name = "dax_chirp_msg"
     virtual = "1"
     signature = "0"
     title = "DAX Chirp Message Protocol"

@@ -1,0 +1,69 @@
+The following ABNF grammar defines the DAX Chirp Message Protocol:
+
+    dax_chirp_msg   = *( HELLO | WORLD | ZYRE-ENTER | ZYRE-JOIN | ZYRE-LEAVE | ZYRE-EXIT | ZYRE-STOP | ZYRE-EVASIVE )
+
+    ;  No description
+
+    HELLO           = signature %d1 uuid name group
+    signature       = %xAA %xA0             ; two octets
+    uuid            = string                ; UUID of the sender
+    name            = string                ; Name of the sender
+    group           = string                ; Group this message was sent to
+
+    ;  No description
+
+    WORLD           = signature %d2 uuid name
+    uuid            = string                ; UUID of the sender
+    name            = string                ; Name of the sender
+
+    ;  A peer has entered the network
+
+    ZYRE-ENTER      = signature %d3 uuid name headers
+    uuid            = string                ; UUID of the sender
+    name            = string                ; Name of the sender
+    headers         = hash                  ; Headers for the entering peer
+
+    ;  A peer has joined a group
+
+    ZYRE-JOIN       = signature %d4 uuid name group
+    uuid            = string                ; UUID of the sender
+    name            = string                ; Name of the sender
+    group           = string                ; Group the sender is joining
+
+    ;  A peer has left a group
+
+    ZYRE-LEAVE      = signature %d5 uuid name
+    uuid            = string                ; UUID of the sender
+    name            = string                ; Name of the sender
+
+    ;  A peer has exited the network
+
+    ZYRE-EXIT       = signature %d6 uuid name
+    uuid            = string                ; UUID of the sender
+    name            = string                ; Name of the sender
+
+    ;  No description
+
+    ZYRE-STOP       = signature %d7 uuid name
+    uuid            = string                ; UUID of the sender
+    name            = string                ; Name of the sender
+
+    ;  A peer is being evasive
+
+    ZYRE-EVASIVE    = signature %d8 uuid name
+    uuid            = string                ; UUID of the sender
+    name            = string                ; Name of the sender
+
+    ; A list of name/value pairs
+    hash            = hash-count *( hash-name hash-value )
+    hash-count      = number-4
+    hash-value      = longstr
+    hash-name       = string
+
+    ; Strings are always length + text contents
+    string          = number-1 *VCHAR
+    longstr         = number-4 *VCHAR
+
+    ; Numbers are unsigned integers in network byte order
+    number-1        = 1OCTET
+    number-4        = 4OCTET

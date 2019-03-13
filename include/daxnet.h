@@ -10,6 +10,7 @@
 
 //  Include the project library file
 #include "dax_library.h"
+#include <zyre_event.h>
 
 //  Add your own public definitions here, if you need them
 

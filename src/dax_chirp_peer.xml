@@ -1,7 +1,7 @@
 <class
     name = "dax_chirp_peer"
     title = "DAX Chirp peer"
-    script = "zproto_peer_c"
+    script = "zproto_zyrepeer_c"
     protocol_class = "dax_chirp_msg"
     project_header = "dax_classes.h"
     package_dir = "../include"

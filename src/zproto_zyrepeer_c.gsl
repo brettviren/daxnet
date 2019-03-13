@@ -761,7 +761,7 @@ s_client_new (zsock_t *cmdpipe, zsock_t *msgpipe)
             self->client.cmdpipe = self->cmdpipe;
             self->client.msgpipe = self->msgpipe;
             //self->client.dealer = self->dealer;
-            self->client.zyre = self.zyre;
+            self->client.zyre = self->zyre;
             self->client.message = self->message;
             self->client.args = &self->args;
             if (client_initialize (&self->client))
@@ -986,7 +986,7 @@ s_protocol_event (s_client_t *self, $(proto)_t *message)
 .               endif
                         //$(proto)_send (self->message, self->dealer);
 .           elsif name = "join"
-                        if ($(class.name)_verbose)
+                        if (self->verbose)
                             zsys_debug ("%s:         $ $(name) : %s", self->log_prefix,"$(GROUP)");
                         zyre_join(self->zyre,"$(GROUP)");
 .           elsif name = "terminate"
@@ -1293,47 +1293,43 @@ s_client_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
                 self->loop, self->expiry, 1, s_client_handle_expiry, self);
 .endif
         //Translate the zyre event into a $(proto) message 
-        switch(zyre_event_type(event))
-        {
-            case ZYRE_EVENT_SHOUT:
-               
-               //Use the payload of the shout as our message body
-                $(proto)_recv(self->message,zyre_event_msg(event)); 
+        const char* evtype = zyre_event_type(event);
+        if (streq("SHOUT", evtype)) {
+            //Use the payload of the shout as our message body
+            $(proto)_recv(self->message,zyre_event_msg(event)); 
 
-                //Copy over the relevant zyre data 
-                $(proto)_set_group(self->message,strdup(zyre_event_group(event)));
-                
-              break;
-            case ZYRE_EVENT_WHISPER:
-                 
-                //Use the payload message of the whisper as our message body
-                $(proto)_recv(self->message,zyre_event_msg(event));   
-            break;
-            case ZYRE_EVENT_ENTER: 
-                $(proto)_set_id(self->message,$(PROTO)_ZYRE_ENTER);
-                zhash_t* hash = zhash_dup(zyre_event_headers(event));
-                $(proto)_set_headers(self->message,&hash);
-                break;
-            case ZYRE_EVENT_JOIN: 
-                $(proto)_set_id(self->message,$(PROTO)_ZYRE_JOIN);
-                $(proto)_set_group(self->message,strdup(zyre_event_group(event)));
-                break;
-            case ZYRE_EVENT_LEAVE:
-                $(proto)_set_id(self->message,$(PROTO)_ZYRE_LEAVE);
-                break;
-            case ZYRE_EVENT_EXIT:
-                $(proto)_set_id(self->message,$(PROTO)_ZYRE_EXIT);
-                break;
-            case ZYRE_EVENT_STOP:
-                $(proto)_set_id(self->message,$(PROTO)_ZYRE_STOP);
-                break;
-            case ZYRE_EVENT_EVASIVE :
-                $(proto)_set_id(self->message,$(PROTO)_ZYRE_EVASIVE);
-
-            break;
+            //Copy over the relevant zyre data 
+            $(proto)_set_group(self->message,strdup(zyre_event_group(event)));
+        }    
+        else if (streq("WHISPER", evtype)) {
+            //Use the payload message of the whisper as our message body
+            $(proto)_recv(self->message,zyre_event_msg(event));   
         }
-        $(proto)_set_uuid (self->message,strdup(zyre_event_sender(event)));
-        $(proto)_set_name (self->message,strdup(zyre_event_name(event)));
+        else if (streq("ENTER", evtype)) {
+            $(proto)_set_id(self->message,$(PROTO)_ZYRE_ENTER);
+            zhash_t* hash = zhash_dup(zyre_event_headers(event));
+            $(proto)_set_headers(self->message,&hash);
+        }
+        else if (streq("JOIN", evtype)) {
+            $(proto)_set_id(self->message,$(PROTO)_ZYRE_JOIN);
+            $(proto)_set_group(self->message,strdup(zyre_event_group(event)));
+        }
+        else if (streq("LEAVE", evtype)) {
+            $(proto)_set_id(self->message,$(PROTO)_ZYRE_LEAVE);
+        }
+        else if (streq("EXIT", evtype)) {
+            $(proto)_set_id(self->message,$(PROTO)_ZYRE_EXIT);
+        }
+        else if (streq("STOP", evtype)) {
+            $(proto)_set_id(self->message,$(PROTO)_ZYRE_STOP);
+        }
+        else if (streq("EVASIVE", evtype)) {
+            $(proto)_set_id(self->message,$(PROTO)_ZYRE_EVASIVE);
+        }
+        // fixme: what to do if it's something unknown?
+
+        $(proto)_set_uuid (self->message,strdup(zyre_event_peer_uuid(event)));
+        $(proto)_set_name (self->message,strdup(zyre_event_peer_name(event)));
         s_client_execute (self, s_protocol_event (self, self->message));
         zyre_event_destroy(&event);
         if (self->terminated)
