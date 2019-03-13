@@ -1825,12 +1825,18 @@ $(class.name)_test (bool verbose)
     //  @selftest
     // TODO: fill this out
     $(class.name)_t *peer1 = $(class.name)_new ("test1");
-    $(class.name)_t *peer2 = $(class.name)_new ("test2");
+    assert (peer1);
     $(class.name)_set_verbose(peer1, verbose);
+
+    // simulate some application "work"
+    zclock_sleep(100);
+
+    $(class.name)_t *peer2 = $(class.name)_new ("test2");
+    assert (peer2);
     $(class.name)_set_verbose(peer2, verbose);
 
     // simulate some application "work"
-    zclock_sleep(2);
+    zclock_sleep(100);
     
     $(class.name)_destroy (&peer1);
     $(class.name)_destroy (&peer2);

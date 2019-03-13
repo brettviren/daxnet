@@ -369,7 +369,7 @@ s_peer_execute (s_peer_t *self, event_t event)
                             zsys_debug ("%s:         $ send HELLO",
                                 self->log_prefix);
                         dax_chirp_msg_set_id (self->message, DAX_CHIRP_MSG_HELLO);
-                        zsys_debug ("%s: Send message to server", self->log_prefix);
+                        zsys_debug ("%s: Send message to other peer", self->log_prefix);
                         dax_chirp_msg_print (self->message);
                         //dax_chirp_msg_send (self->message, self->dealer);
                         zmsg_t* encoded_msg = zmsg_new();
@@ -398,7 +398,7 @@ s_peer_execute (s_peer_t *self, event_t event)
                             zsys_debug ("%s:         $ send WORLD",
                                 self->log_prefix);
                         dax_chirp_msg_set_id (self->message, DAX_CHIRP_MSG_WORLD);
-                        zsys_debug ("%s: Send message to server", self->log_prefix);
+                        zsys_debug ("%s: Send message to other peer", self->log_prefix);
                         dax_chirp_msg_print (self->message);
                         //dax_chirp_msg_send (self->message, self->dealer);
                         zmsg_t* encoded_msg = zmsg_new();
@@ -425,7 +425,7 @@ s_peer_execute (s_peer_t *self, event_t event)
                             zsys_debug ("%s:         $ send CHAT",
                                 self->log_prefix);
                         dax_chirp_msg_set_id (self->message, DAX_CHIRP_MSG_CHAT);
-                        zsys_debug ("%s: Send message to server", self->log_prefix);
+                        zsys_debug ("%s: Send message to other peer", self->log_prefix);
                         dax_chirp_msg_print (self->message);
                         //dax_chirp_msg_send (self->message, self->dealer);
                         zmsg_t* encoded_msg = zmsg_new();
@@ -558,7 +558,7 @@ s_peer_handle_msgpipe (zloop_t *loop, zsock_t *reader, void *argument)
 }
 
 
-//  Handle a message (a protocol reply) from the server
+//  Handle a message (a protocol reply) from another peer
 
 static int
 s_peer_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)

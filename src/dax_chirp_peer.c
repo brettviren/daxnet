@@ -30,7 +30,7 @@ typedef struct {
     zsock_t *msgpipe;           //  Message pipe to/from caller API
     //zsock_t *dealer;            //  Socket to talk to server
     zyre_t* zyre;
-    dax_chirp_msg_t *message;   //  Message to/from server
+    dax_chirp_msg_t *message;   //  Message to/from other peer
     peer_args_t *args;        //  Arguments from methods
 
     //  TODO: Add specific properties for your application
@@ -70,16 +70,16 @@ dax_chirp_peer_test (bool verbose)
     //  @selftest
     // TODO: fill this out
     dax_chirp_peer_t *peer1 = dax_chirp_peer_new ("test1");
-    dax_chirp_peer_t *peer2 = dax_chirp_peer_new ("test2");
     dax_chirp_peer_set_verbose(peer1, verbose);
+
+    // simulate some application "work"
+    zclock_sleep(100);
+
+    dax_chirp_peer_t *peer2 = dax_chirp_peer_new ("test2");
     dax_chirp_peer_set_verbose(peer2, verbose);
 
     // simulate some application "work"
-    zclock_sleep(1000);
-    dax_chirp_peer_send_chat(peer1, "chat to peer1");
-    zclock_sleep(1000);
-    dax_chirp_peer_send_chat(peer2, "chat to peer2");
-    zclock_sleep(1000);
+    zclock_sleep(100);
 
     dax_chirp_peer_destroy (&peer1);
     dax_chirp_peer_destroy (&peer2);
