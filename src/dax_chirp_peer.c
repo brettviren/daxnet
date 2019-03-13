@@ -64,11 +64,13 @@ s_slurp(zsock_t* sock)
 {
     zmsg_t* msg = zmsg_recv(sock);
     if (!msg) return;
-    char* first = zmsg_popstr(msg);
-    if (first) {
-        zsys_debug("msg to API: [%s]", first);
-        free(first);
-    }
+    dax_chirp_msg_t* pmsg = dax_chirp_msg_new();
+    assert(pmsg);
+    dax_chirp_msg_recv(pmsg, msg);
+
+    zsys_debug("dax_chirp_msg");
+    dax_chirp_msg_print(pmsg);
+    dax_chirp_msg_destroy(&pmsg);
     zmsg_destroy(&msg);
 }
 
@@ -144,7 +146,6 @@ static void
 generate_chat_message (peer_t *self)
 {
     zsys_debug("action generate_chat_message not implemented");
-    dax_chirp_msg_set_message(self->message, "this is generated");
 }
 
 
@@ -156,5 +157,4 @@ static void
 output_chat_message (peer_t *self)
 {
     zsys_debug("action output_chat_message not implemented");
-    dax_chirp_msg_print(self->message);
 }

@@ -358,6 +358,13 @@ s_peer_execute (s_peer_t *self, event_t event)
                 else
                 if (self->event == zyre_join_event) {
                     if (!self->exception) {
+                        if (self->verbose)
+                            zsys_debug ("%s:         $ ingest :", self->log_prefix);
+                        zmsg_t* encoded_msg = zmsg_new();
+                        dax_chirp_msg_send (self->message, encoded_msg);
+                        zmsg_send(&encoded_msg, self->msgpipe);
+                    }
+                    if (!self->exception) {
                         //  send HELLO
                         if (self->verbose)
                             zsys_debug ("%s:         $ send HELLO",
@@ -740,7 +747,8 @@ dax_chirp_peer_msgpipe (dax_chirp_peer_t *self)
 
 //  ---------------------------------------------------------------------------
 //  Generated from <method>
-//  Client interface for sending a PLEASE_CHAT message into the state machine.
+//  Client interface for sending a PLEASE_CHAT message into the state machine via
+//  the actor's command pipe.
 
 int
 dax_chirp_peer_please_chat (dax_chirp_peer_t *self, const char *message)

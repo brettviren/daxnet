@@ -91,10 +91,11 @@ for class.state where defined (inherit)
     endfor
 endfor
 
-#   Collect prototypes that we need
+#   Collect prototypes that we need, exclude built-ins
 for class.action
     if name <> "send" \
     &  name <> "join" \
+    &  name <> "ingest" \
     &  name <> "terminate"
         new class.prototype
             prototype.name = "$(action.name:c)"
@@ -975,6 +976,12 @@ s_protocol_event (s_peer_t *self, $(proto)_t *message)
                         if (self->verbose)
                             zsys_debug ("%s:         $ $(name) : %s", self->log_prefix,"$(GROUP)");
                         zyre_join(self->zyre,"$(GROUP)");
+.           elsif name = "ingest"
+                        if (self->verbose)
+                            zsys_debug ("%s:         $ $(name) :", self->log_prefix);
+                        zmsg_t* encoded_msg = zmsg_new();
+                        $(proto)_send (self->message, encoded_msg);
+                        zmsg_send(&encoded_msg, self->msgpipe);
 .           elsif name = "terminate"
                         //  terminate
                         if (self->verbose)
@@ -1808,11 +1815,13 @@ s_slurp(zsock_t* sock)
 {
     zmsg_t* msg = zmsg_recv(sock);
     if (!msg) return;
-    char* first = zmsg_popstr(msg);
-    if (first) {
-        zsys_debug("msg to API: [%s]", first);
-        free(first);
-    }
+    $(proto)_t* pmsg = $(proto)_new();
+    assert(pmsg);
+    $(proto)_recv(pmsg, msg);
+
+    zsys_debug("$(proto)");
+    $(proto)_print(pmsg);
+    $(proto)_destroy(&pmsg);
     zmsg_destroy(&msg);
 }
 

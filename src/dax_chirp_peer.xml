@@ -17,7 +17,11 @@
     </event> 
 
     <event name = "ZYRE_JOIN" next = "chatting">
-      If another node enters send them a hello.  The send action is a builtin.
+      If another node enters send them a hello.  The ingest and send
+      actions are built-in.  The ingest action will cause the message
+      to be sent down the actor's msgpipe.  User code MUST recv or
+      eventually HWM may be reached.
+      <action name = "ingest"/>
       <action name = "send" cast = "shout" group = "CHAT" message = "HELLO"/>
     </event>
   </state>
@@ -59,6 +63,6 @@
     machine via the actor's command pipe.
     <field name = "message" type = "string" />
   </method>
-    
+
 
 </class>

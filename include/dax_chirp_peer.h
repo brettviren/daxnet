@@ -57,7 +57,8 @@ zsock_t *
 bool
     dax_chirp_peer_connected (dax_chirp_peer_t *self);
 
-//  Client interface for sending a PLEASE_CHAT message into the state machine.
+//  Client interface for sending a PLEASE_CHAT message into the state machine via
+//  the actor's command pipe.
 int
     dax_chirp_peer_please_chat (dax_chirp_peer_t *self, const char *message);
 
