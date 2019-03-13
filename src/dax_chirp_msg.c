@@ -265,9 +265,9 @@ dax_chirp_msg_t *
         dax_chirp_msg_set_id (self, DAX_CHIRP_MSG_HELLO);
     }
     else
-    if (streq ("DAX_CHIRP_MSG_SEND_CHAT", message)) {
+    if (streq ("DAX_CHIRP_MSG_PLEASE_CHAT", message)) {
         self = dax_chirp_msg_new ();
-        dax_chirp_msg_set_id (self, DAX_CHIRP_MSG_SEND_CHAT);
+        dax_chirp_msg_set_id (self, DAX_CHIRP_MSG_PLEASE_CHAT);
     }
     else
     if (streq ("DAX_CHIRP_MSG_CHAT", message)) {
@@ -363,7 +363,7 @@ dax_chirp_msg_t *
             strncpy (self->group, s, 255);
             }
             break;
-        case DAX_CHIRP_MSG_SEND_CHAT:
+        case DAX_CHIRP_MSG_PLEASE_CHAT:
             content = zconfig_locate (config, "content");
             if (!content) {
                 zsys_error ("Can't find 'content' section");
@@ -692,7 +692,7 @@ dax_chirp_msg_recv (dax_chirp_msg_t *self, zmsg_t *input)
             GET_STRING (self->group);
             break;
 
-        case DAX_CHIRP_MSG_SEND_CHAT:
+        case DAX_CHIRP_MSG_PLEASE_CHAT:
             GET_STRING (self->message);
             break;
 
@@ -784,7 +784,7 @@ dax_chirp_msg_send (dax_chirp_msg_t *self, zmsg_t *output)
             frame_size += 1 + strlen (self->name);
             frame_size += 1 + strlen (self->group);
             break;
-        case DAX_CHIRP_MSG_SEND_CHAT:
+        case DAX_CHIRP_MSG_PLEASE_CHAT:
             frame_size += 1 + strlen (self->message);
             break;
         case DAX_CHIRP_MSG_CHAT:
@@ -847,7 +847,7 @@ dax_chirp_msg_send (dax_chirp_msg_t *self, zmsg_t *output)
             PUT_STRING (self->group);
             break;
 
-        case DAX_CHIRP_MSG_SEND_CHAT:
+        case DAX_CHIRP_MSG_PLEASE_CHAT:
             PUT_STRING (self->message);
             break;
 
@@ -927,8 +927,8 @@ dax_chirp_msg_print (dax_chirp_msg_t *self)
             zsys_debug ("    group='%s'", self->group);
             break;
 
-        case DAX_CHIRP_MSG_SEND_CHAT:
-            zsys_debug ("DAX_CHIRP_MSG_SEND_CHAT:");
+        case DAX_CHIRP_MSG_PLEASE_CHAT:
+            zsys_debug ("DAX_CHIRP_MSG_PLEASE_CHAT:");
             zsys_debug ("    message='%s'", self->message);
             break;
 
@@ -1024,9 +1024,9 @@ dax_chirp_msg_zpl (dax_chirp_msg_t *self, zconfig_t *parent)
             zconfig_putf (config, "group", "%s", self->group);
             break;
             }
-        case DAX_CHIRP_MSG_SEND_CHAT:
+        case DAX_CHIRP_MSG_PLEASE_CHAT:
         {
-            zconfig_put (root, "message", "DAX_CHIRP_MSG_SEND_CHAT");
+            zconfig_put (root, "message", "DAX_CHIRP_MSG_PLEASE_CHAT");
 
             if (self->routing_id) {
                 char *hex = NULL;
@@ -1236,8 +1236,8 @@ dax_chirp_msg_command (dax_chirp_msg_t *self)
         case DAX_CHIRP_MSG_HELLO:
             return ("HELLO");
             break;
-        case DAX_CHIRP_MSG_SEND_CHAT:
-            return ("SEND_CHAT");
+        case DAX_CHIRP_MSG_PLEASE_CHAT:
+            return ("PLEASE_CHAT");
             break;
         case DAX_CHIRP_MSG_CHAT:
             return ("CHAT");
@@ -1454,7 +1454,7 @@ dax_chirp_msg_test (bool verbose)
             self = self_temp;
         }
     }
-    dax_chirp_msg_set_id (self, DAX_CHIRP_MSG_SEND_CHAT);
+    dax_chirp_msg_set_id (self, DAX_CHIRP_MSG_PLEASE_CHAT);
     dax_chirp_msg_set_message (self, "Life is short but Now lasts for ever");
     zmsg_destroy (&output);
     output = zmsg_new ();

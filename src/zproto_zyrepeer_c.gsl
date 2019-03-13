@@ -94,6 +94,7 @@ endfor
 #   Collect prototypes that we need
 for class.action
     if name <> "send" \
+    &  name <> "join" \
     &  name <> "terminate"
         new class.prototype
             prototype.name = "$(action.name:c)"
@@ -680,7 +681,6 @@ typedef struct {
     peer_t peer;                //  Application-level peer context
     zsock_t *cmdpipe;           //  Get/send commands from caller API
     zsock_t *msgpipe;           //  Get/send messages from caller API
-    //zsock_t *dealer;            //  Socket to talk to server
     zyre_t *zyre;               // The zyre node
     zloop_t *loop;              //  Listen to pipe and zyre
     $(proto)_t *message;        //  Message received or sent
@@ -699,7 +699,7 @@ typedef struct {
     int wakeup_timer;           //  zloop timer for alarms
     int heartbeat_timer;        //  zloop timer for heartbeat
     event_t wakeup_event;       //  Wake up with this event
-    char log_prefix [41];       //  Log prefix string
+    char log_prefix [64];       //  Log prefix string
 } s_peer_t;
 
 static int
@@ -741,10 +741,9 @@ s_peer_new (zsock_t *cmdpipe, zsock_t *msgpipe)
         self->state = $(name:c)_state;
 .endfor
         self->event = NULL_event;
+        // when a zname is set, log_prefix is rewritten to include it.
         snprintf (self->log_prefix, sizeof (self->log_prefix),
-            "%6d:%-33s", randof (1000000), "$(class.name)");
-        //self->dealer = zsock_new (ZMQ_DEALER);
-        //if (self->dealer)
+              "%6d:%32s:%-18s", randof (1000000), "$(class.name)", "(unnamed)");
         self->zyre = zyre_new(NULL);
         if (self->zyre)
             self->message = $(proto)_new ();
@@ -754,7 +753,6 @@ s_peer_new (zsock_t *cmdpipe, zsock_t *msgpipe)
             //  Give application chance to initialize and set next event
             self->peer.cmdpipe = self->cmdpipe;
             self->peer.msgpipe = self->msgpipe;
-            //self->peer.dealer = self->dealer;
             self->peer.zyre = self->zyre;
             self->peer.message = self->message;
             self->peer.args = &self->args;
@@ -782,7 +780,6 @@ s_peer_destroy (s_peer_t **self_p)
         peer_terminate (&self->peer);
         $(proto)_destroy (&self->message);
         zsock_destroy (&self->msgpipe);
-        //zsock_destroy (&self->dealer);
         zyre_destroy(&self->zyre);
         zloop_destroy (&self->loop);
         free (self);
@@ -795,7 +792,7 @@ s_peer_destroy (s_peer_t **self_p)
 
 //  Set the next event, needed in at least one action in an internal
 //  state; otherwise the state machine will wait for a message on the
-//  dealer socket and treat that as the event.
+//  zyre socket and treat that as the event.
 
 static void
 engine_set_next_event (peer_t *peer, event_t event)
@@ -967,16 +964,13 @@ s_protocol_event (s_peer_t *self, $(proto)_t *message)
                         zsys_debug ("%s: Send message to other peer", self->log_prefix);
                         $(proto)_print (self->message);
 .               endif
-                        //$(proto)_send (self->message, self->dealer);
                         zmsg_t* encoded_msg = zmsg_new();
-                        $(proto)_send (self->message, encoded_msg); //Encode the message to allow zyre to wrap it
+                        $(proto)_send (self->message, encoded_msg);
 .               if cast = "whisper"
-                        //$(proto)_send (self->message, self->zyre);
                         zyre_whisper(self->zyre,$(proto)_uuid(self->message),&encoded_msg);
 .               else 
                         zyre_shout(self->zyre,$(proto)_group(self->message),&encoded_msg);
 .               endif
-                        //$(proto)_send (self->message, self->dealer);
 .           elsif name = "join"
                         if (self->verbose)
                             zsys_debug ("%s:         $ $(name) : %s", self->log_prefix,"$(GROUP)");
@@ -1156,6 +1150,8 @@ s_peer_handle_cmdpipe (zloop_t *loop, zsock_t *reader, void *argument)
         char* zname=0;
         zsock_recv (self->cmdpipe, "s", &zname);
         zyre_set_name(self->zyre, zname);
+        snprintf (self->log_prefix, sizeof (self->log_prefix),
+              "%6d:%32s:%-18s", randof (1000000), "$(class.name)", zname);
         free (zname);
     }
 .for class.method where immediate = 0
@@ -1232,16 +1228,13 @@ s_peer_handle_msgpipe (zloop_t *loop, zsock_t *reader, void *argument)
             zuuid_destroy (&$(name));
 .           endif
 .       endfor
-            //$(proto)_send (self->message, self->dealer);
             zmsg_t * encoded_msg = zmsg_new();
             $(proto)_send (self->message, encoded_msg);
 .       if cast = "whisper"
-            //$(proto)_send (self->message, self->zyre);
             zyre_whisper(self->zyre,$(proto)_uuid(self->message),encoded_msg);
 .       else
             zyre_shout(self->zyre,"$(GROUP)",&encoded_msg);
 .       endif
-            //$(proto)_send (self->message, self->dealer);
         }
 .   endfor
 .endfor
@@ -1267,9 +1260,6 @@ s_peer_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
 
     //  We will process as many messages as we can, to reduce the overhead
     //  of polling and the reactor:
-    //while (zsock_events (self->dealer) & ZMQ_POLLIN) {
-    //    if ($(proto)_recv (self->message, self->dealer))
-    //        return -1;              //  Interrupted; exit zloop
    while (zsock_events (zyre_socket(self->zyre)) & ZMQ_POLLIN) {
         zyre_event_t * event = zyre_event_new(self->zyre);
         if (!event)
@@ -1293,10 +1283,9 @@ s_peer_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
         //Translate the zyre event into a $(proto) message 
         const char* evtype = zyre_event_type(event);
         if (streq("SHOUT", evtype)) {
-            //Use the payload of the shout as our message body
             $(proto)_recv(self->message,zyre_event_msg(event)); 
 
-            //Copy over the relevant zyre data 
+            //Explicitly fill in group so proto message for whisper may used to shout.
             $(proto)_set_group(self->message,strdup(zyre_event_group(event)));
         }    
         else if (streq("WHISPER", evtype)) {
@@ -1352,7 +1341,6 @@ $(class.name) (zsock_t *cmdpipe, void *msgpipe)
         //  Set up handler for the sockets the peer uses
         engine_handle_socket ((peer_t *) self, self->cmdpipe, s_peer_handle_cmdpipe);
         engine_handle_socket ((peer_t *) self, self->msgpipe, s_peer_handle_msgpipe);
-        //engine_handle_socket ((peer_t *) self, self->dealer, s_peer_handle_protocol);
         engine_handle_socket ((peer_t *) self, zyre_socket (self->zyre), s_peer_handle_protocol);
         //  Run reactor until there's a termination signal
         zloop_start (self->loop);
@@ -1551,6 +1539,7 @@ s_accept_reply ($(class.name)_t *self, ...)
 
 
 //  ---------------------------------------------------------------------------
+//  Generated from <method>
 //  $(method.?'No explanation':justify,block%-80s)
 .   if count (method.accept)
 .       if method.type = "number" | method.type = "integer"
@@ -1783,7 +1772,6 @@ typedef struct {
     //  faster asynchronous message flows.
     zsock_t *cmdpipe;           //  Command pipe to/from caller API
     zsock_t *msgpipe;           //  Message pipe to/from caller API
-    //zsock_t *dealer;            //  Socket to talk to server
     zyre_t* zyre;
     $(proto)_t *message;        //  Message to/from other peer
     peer_args_t *args;        //  Arguments from methods
@@ -1816,6 +1804,19 @@ peer_terminate (peer_t *self)
 //  Selftest
 
 void
+s_slurp(zsock_t* sock)
+{
+    zmsg_t* msg = zmsg_recv(sock);
+    if (!msg) return;
+    char* first = zmsg_popstr(msg);
+    if (first) {
+        zsys_debug("msg to API: [%s]", first);
+        free(first);
+    }
+    zmsg_destroy(&msg);
+}
+
+void
 $(class.name)_test (bool verbose)
 {
     printf (" * $(class.name): ");
@@ -1824,22 +1825,56 @@ $(class.name)_test (bool verbose)
 
     //  @selftest
     // TODO: fill this out
-    $(class.name)_t *peer1 = $(class.name)_new ("test1");
+    $(class.name)_t *peer1 = $(class.name)_new ("peer1");
     assert (peer1);
     $(class.name)_set_verbose(peer1, verbose);
 
     // simulate some application "work"
-    zclock_sleep(100);
+    //zclock_sleep(100);
 
-    $(class.name)_t *peer2 = $(class.name)_new ("test2");
+    $(class.name)_t *peer2 = $(class.name)_new ("peer2");
     assert (peer2);
     $(class.name)_set_verbose(peer2, verbose);
 
     // simulate some application "work"
-    zclock_sleep(100);
+    //zclock_sleep(100);
     
+    $(class.name)_t *peer3 = $(class.name)_new ("peer3");
+    assert (peer3);
+    $(class.name)_set_verbose(peer3, verbose);
+
+    // simulate some application "work"
+    zclock_sleep(100);
+
+    zactor_t *a1 = $(class.name)_actor(peer1);
+    zactor_t *a2 = $(class.name)_actor(peer2);
+    zactor_t *a3 = $(class.name)_actor(peer3);
+
+    assert (a1 && a2 && a3);
+
+    zsock_t* p1 = $(class.name)_msgpipe(peer1);
+    zsock_t* p2 = $(class.name)_msgpipe(peer2);
+    zsock_t* p3 = $(class.name)_msgpipe(peer3);
+
+    assert (p1 && p2 && p3);
+
+    zpoller_t* poller = zpoller_new(zactor_sock(a1),
+                                    zactor_sock(a2),
+                                    zactor_sock(a3),
+                                    p1,p2,p3,NULL);
+
+    while (!zsys_interrupted) {
+        void* which = zpoller_wait(poller, 1000);
+        if (!which) break;
+        s_slurp((zsock_t*)which);
+    }
+
     $(class.name)_destroy (&peer1);
+    // simulate some application "work"
+    //zclock_sleep(100);
+
     $(class.name)_destroy (&peer2);
+    $(class.name)_destroy (&peer3);
     //  @end
     printf ("OK\\n");
 }
@@ -1867,12 +1902,13 @@ for class.prototype where exists = 0
     >
     >
     >//  ---------------------------------------------------------------------------
-    >//  $(name)
+    >//  action method $(name)
     >//
     >
     >static void
     >$(name) ($(args))
     >{
+    >    zsys_debug("action $(name) not implemented");
     >}
 endfor
 .endtemplate

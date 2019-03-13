@@ -22,12 +22,17 @@
 
     HELLO - This is a test message for Zyre based protocols.
 
-Messages must specify at least "uuid" and "name" and shouted
-messages "group".
+Messages must specify at least "uuid" and "name".  A group field may
+be defined.
 
 
 
-A message sent from the API injected into the state machine.
+A message sent from the API injected into the state machine.  See
+"please chat" method in dax_chirp_peer.xml.
+
+
+
+Some chat message
 
 
 
@@ -42,14 +47,19 @@ Must also handle Zyre events
         name                string      Name of the sender
         group               string      Group this message was sent to
 
-    SEND_CHAT - This is a test message for Zyre based protocols.
+    PLEASE_CHAT - This is a test message for Zyre based protocols.
 
-Messages must specify at least "uuid" and "name" and shouted
-messages "group".
+Messages must specify at least "uuid" and "name".  A group field may
+be defined.
 
 
 
-A message sent from the API injected into the state machine.
+A message sent from the API injected into the state machine.  See
+"please chat" method in dax_chirp_peer.xml.
+
+
+
+Some chat message
 
 
 
@@ -64,12 +74,17 @@ Must also handle Zyre events
 
     CHAT - This is a test message for Zyre based protocols.
 
-Messages must specify at least "uuid" and "name" and shouted
-messages "group".
+Messages must specify at least "uuid" and "name".  A group field may
+be defined.
 
 
 
-A message sent from the API injected into the state machine.
+A message sent from the API injected into the state machine.  See
+"please chat" method in dax_chirp_peer.xml.
+
+
+
+Some chat message
 
 
 
@@ -86,12 +101,17 @@ Must also handle Zyre events
 
     WORLD - This is a test message for Zyre based protocols.
 
-Messages must specify at least "uuid" and "name" and shouted
-messages "group".
+Messages must specify at least "uuid" and "name".  A group field may
+be defined.
 
 
 
-A message sent from the API injected into the state machine.
+A message sent from the API injected into the state machine.  See
+"please chat" method in dax_chirp_peer.xml.
+
+
+
+Some chat message
 
 
 
@@ -125,12 +145,17 @@ Must also handle Zyre events
 
     ZYRE_STOP - This is a test message for Zyre based protocols.
 
-Messages must specify at least "uuid" and "name" and shouted
-messages "group".
+Messages must specify at least "uuid" and "name".  A group field may
+be defined.
 
 
 
-A message sent from the API injected into the state machine.
+A message sent from the API injected into the state machine.  See
+"please chat" method in dax_chirp_peer.xml.
+
+
+
+Some chat message
 
 
 
@@ -151,7 +176,7 @@ Must also handle Zyre events
 
 
 #define DAX_CHIRP_MSG_HELLO                 1
-#define DAX_CHIRP_MSG_SEND_CHAT             2
+#define DAX_CHIRP_MSG_PLEASE_CHAT           2
 #define DAX_CHIRP_MSG_CHAT                  3
 #define DAX_CHIRP_MSG_WORLD                 4
 #define DAX_CHIRP_MSG_ZYRE_ENTER            5

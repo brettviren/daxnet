@@ -1,6 +1,6 @@
 The following ABNF grammar defines the DAX Chirp Message Protocol:
 
-    dax_chirp_msg   = *( HELLO | SEND-CHAT | CHAT | WORLD | ZYRE-ENTER | ZYRE-JOIN | ZYRE-LEAVE | ZYRE-EXIT | ZYRE-STOP | ZYRE-EVASIVE )
+    dax_chirp_msg   = *( HELLO | PLEASE-CHAT | CHAT | WORLD | ZYRE-ENTER | ZYRE-JOIN | ZYRE-LEAVE | ZYRE-EXIT | ZYRE-STOP | ZYRE-EVASIVE )
 
     ;  No description
 
@@ -12,7 +12,7 @@ The following ABNF grammar defines the DAX Chirp Message Protocol:
 
     ;  No description
 
-    SEND-CHAT       = signature %d2 message
+    PLEASE-CHAT     = signature %d2 message
     message         = string                ; Chat message to this group
 
     ;  No description

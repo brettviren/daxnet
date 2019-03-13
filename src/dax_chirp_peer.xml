@@ -11,12 +11,13 @@
   
   <state name = "start">
     <event name = "ZYRE_ENTER" next = "start">
-      Immediately detects when a node joins and enters them into the chat group
+      Immediately detects when a node joins and enters them into the
+      chat group.  The join action is a built in.
       <action name = "join" group = "CHAT"/>
     </event> 
 
     <event name = "ZYRE_JOIN" next = "chatting">
-      If another node enters send them a hello
+      If another node enters send them a hello.  The send action is a builtin.
       <action name = "send" cast = "shout" group = "CHAT" message = "HELLO"/>
     </event>
   </state>
@@ -30,22 +31,32 @@
     </event>
     <event name = "WORLD">
       A peer is welcoming another peer to the network
+      <action name = "send" cast = "whisper" message = "PLEASE CHAT"/>
     </event>
 
-    <event name = "SEND CHAT">
+    <event name = "PLEASE CHAT">
       The client is requesting a chat message, package it up and shout it out
       <action name = "generate chat message"/>
-      <action name = "send" cast = "shout" group = "CHAT" message = "CHAT"/>
     </event>
     <event name = "CHAT">
-      Another node has sent a chat message, output the contents to the user 
+      Another peer has sent a chat message, output the contents to the user 
       <action name = "output chat message"/>
     </event>
 
+    <event name = "ZYRE_ENTER">
+      Another peer has entered. 
+      <action name = "output chat message"/>
+    </event>
+
+    <event name = "ZYRE_JOIN">
+      Another peer joined entered. 
+      <action name = "output chat message"/>
+    </event>
   </state>
 
-  <method name = "send chat">
-    Client interface for sending a message into the state machine to broadcast to the group
+  <method name = "please chat">
+    Client interface for sending a PLEASE_CHAT message into the state
+    machine via the actor's command pipe.
     <field name = "message" type = "string" />
   </method>
     

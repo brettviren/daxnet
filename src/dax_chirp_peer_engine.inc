@@ -28,7 +28,7 @@ typedef enum {
     zyre_join_event = 2,
     hello_event = 3,
     world_event = 4,
-    send_chat_event = 5,
+    please_chat_event = 5,
     chat_event = 6
 } event_t;
 
@@ -47,7 +47,7 @@ s_event_name [] = {
     "ZYRE_JOIN",
     "HELLO",
     "WORLD",
-    "SEND_CHAT",
+    "PLEASE_CHAT",
     "CHAT"
 };
 
@@ -66,7 +66,6 @@ typedef struct {
     peer_t peer;                //  Application-level peer context
     zsock_t *cmdpipe;           //  Get/send commands from caller API
     zsock_t *msgpipe;           //  Get/send messages from caller API
-    //zsock_t *dealer;            //  Socket to talk to server
     zyre_t *zyre;               // The zyre node
     zloop_t *loop;              //  Listen to pipe and zyre
     dax_chirp_msg_t *message;   //  Message received or sent
@@ -85,7 +84,7 @@ typedef struct {
     int wakeup_timer;           //  zloop timer for alarms
     int heartbeat_timer;        //  zloop timer for heartbeat
     event_t wakeup_event;       //  Wake up with this event
-    char log_prefix [41];       //  Log prefix string
+    char log_prefix [64];       //  Log prefix string
 } s_peer_t;
 
 static int
@@ -100,8 +99,6 @@ static int
     s_peer_handle_wakeup (zloop_t *loop, int timer_id, void *argument);
 static void
     s_satisfy_pedantic_compilers (void);
-static void
-    join (peer_t *self);
 static void
     generate_chat_message (peer_t *self);
 static void
@@ -119,10 +116,9 @@ s_peer_new (zsock_t *cmdpipe, zsock_t *msgpipe)
         self->msgpipe = msgpipe;
         self->state = start_state;
         self->event = NULL_event;
+        // when a zname is set, log_prefix is rewritten to include it.
         snprintf (self->log_prefix, sizeof (self->log_prefix),
-            "%6d:%-33s", randof (1000000), "dax_chirp_peer");
-        //self->dealer = zsock_new (ZMQ_DEALER);
-        //if (self->dealer)
+              "%6d:%32s:%-18s", randof (1000000), "dax_chirp_peer", "(unnamed)");
         self->zyre = zyre_new(NULL);
         if (self->zyre)
             self->message = dax_chirp_msg_new ();
@@ -132,7 +128,6 @@ s_peer_new (zsock_t *cmdpipe, zsock_t *msgpipe)
             //  Give application chance to initialize and set next event
             self->peer.cmdpipe = self->cmdpipe;
             self->peer.msgpipe = self->msgpipe;
-            //self->peer.dealer = self->dealer;
             self->peer.zyre = self->zyre;
             self->peer.message = self->message;
             self->peer.args = &self->args;
@@ -158,7 +153,6 @@ s_peer_destroy (s_peer_t **self_p)
         peer_terminate (&self->peer);
         dax_chirp_msg_destroy (&self->message);
         zsock_destroy (&self->msgpipe);
-        //zsock_destroy (&self->dealer);
         zyre_destroy(&self->zyre);
         zloop_destroy (&self->loop);
         free (self);
@@ -171,7 +165,7 @@ s_peer_destroy (s_peer_t **self_p)
 
 //  Set the next event, needed in at least one action in an internal
 //  state; otherwise the state machine will wait for a message on the
-//  dealer socket and treat that as the event.
+//  zyre socket and treat that as the event.
 
 static void
 engine_set_next_event (peer_t *peer, event_t event)
@@ -302,8 +296,8 @@ s_protocol_event (s_peer_t *self, dax_chirp_msg_t *message)
         case DAX_CHIRP_MSG_HELLO:
             return hello_event;
             break;
-        case DAX_CHIRP_MSG_SEND_CHAT:
-            return send_chat_event;
+        case DAX_CHIRP_MSG_PLEASE_CHAT:
+            return please_chat_event;
             break;
         case DAX_CHIRP_MSG_CHAT:
             return chat_event;
@@ -371,11 +365,9 @@ s_peer_execute (s_peer_t *self, event_t event)
                         dax_chirp_msg_set_id (self->message, DAX_CHIRP_MSG_HELLO);
                         zsys_debug ("%s: Send message to other peer", self->log_prefix);
                         dax_chirp_msg_print (self->message);
-                        //dax_chirp_msg_send (self->message, self->dealer);
                         zmsg_t* encoded_msg = zmsg_new();
-                        dax_chirp_msg_send (self->message, encoded_msg); //Encode the message to allow zyre to wrap it
+                        dax_chirp_msg_send (self->message, encoded_msg);
                         zyre_shout(self->zyre,dax_chirp_msg_group(self->message),&encoded_msg);
-                        //dax_chirp_msg_send (self->message, self->dealer);
                     }
                     if (!self->exception)
                         self->state = chatting_state;
@@ -400,42 +392,55 @@ s_peer_execute (s_peer_t *self, event_t event)
                         dax_chirp_msg_set_id (self->message, DAX_CHIRP_MSG_WORLD);
                         zsys_debug ("%s: Send message to other peer", self->log_prefix);
                         dax_chirp_msg_print (self->message);
-                        //dax_chirp_msg_send (self->message, self->dealer);
                         zmsg_t* encoded_msg = zmsg_new();
-                        dax_chirp_msg_send (self->message, encoded_msg); //Encode the message to allow zyre to wrap it
-                        //dax_chirp_msg_send (self->message, self->zyre);
+                        dax_chirp_msg_send (self->message, encoded_msg);
                         zyre_whisper(self->zyre,dax_chirp_msg_uuid(self->message),&encoded_msg);
-                        //dax_chirp_msg_send (self->message, self->dealer);
                     }
                 }
                 else
                 if (self->event == world_event) {
+                    if (!self->exception) {
+                        //  send PLEASE_CHAT
+                        if (self->verbose)
+                            zsys_debug ("%s:         $ send PLEASE_CHAT",
+                                self->log_prefix);
+                        dax_chirp_msg_set_id (self->message, DAX_CHIRP_MSG_PLEASE_CHAT);
+                        zsys_debug ("%s: Send message to other peer", self->log_prefix);
+                        dax_chirp_msg_print (self->message);
+                        zmsg_t* encoded_msg = zmsg_new();
+                        dax_chirp_msg_send (self->message, encoded_msg);
+                        zyre_whisper(self->zyre,dax_chirp_msg_uuid(self->message),&encoded_msg);
+                    }
                 }
                 else
-                if (self->event == send_chat_event) {
+                if (self->event == please_chat_event) {
                     if (!self->exception) {
                         //  generate chat message
                         if (self->verbose)
                             zsys_debug ("%s:         $ generate chat message", self->log_prefix);
                         generate_chat_message (&self->peer);
                     }
-                    if (!self->exception) {
-                        //  send CHAT
-                        if (self->verbose)
-                            zsys_debug ("%s:         $ send CHAT",
-                                self->log_prefix);
-                        dax_chirp_msg_set_id (self->message, DAX_CHIRP_MSG_CHAT);
-                        zsys_debug ("%s: Send message to other peer", self->log_prefix);
-                        dax_chirp_msg_print (self->message);
-                        //dax_chirp_msg_send (self->message, self->dealer);
-                        zmsg_t* encoded_msg = zmsg_new();
-                        dax_chirp_msg_send (self->message, encoded_msg); //Encode the message to allow zyre to wrap it
-                        zyre_shout(self->zyre,dax_chirp_msg_group(self->message),&encoded_msg);
-                        //dax_chirp_msg_send (self->message, self->dealer);
-                    }
                 }
                 else
                 if (self->event == chat_event) {
+                    if (!self->exception) {
+                        //  output chat message
+                        if (self->verbose)
+                            zsys_debug ("%s:         $ output chat message", self->log_prefix);
+                        output_chat_message (&self->peer);
+                    }
+                }
+                else
+                if (self->event == zyre_enter_event) {
+                    if (!self->exception) {
+                        //  output chat message
+                        if (self->verbose)
+                            zsys_debug ("%s:         $ output chat message", self->log_prefix);
+                        output_chat_message (&self->peer);
+                    }
+                }
+                else
+                if (self->event == zyre_join_event) {
                     if (!self->exception) {
                         //  output chat message
                         if (self->verbose)
@@ -502,13 +507,15 @@ s_peer_handle_cmdpipe (zloop_t *loop, zsock_t *reader, void *argument)
         char* zname=0;
         zsock_recv (self->cmdpipe, "s", &zname);
         zyre_set_name(self->zyre, zname);
+        snprintf (self->log_prefix, sizeof (self->log_prefix),
+              "%6d:%32s:%-18s", randof (1000000), "dax_chirp_peer", zname);
         free (zname);
     }
     else
-    if (streq (method, "SEND CHAT")) {
+    if (streq (method, "PLEASE CHAT")) {
         zstr_free (&self->args.message);
         zsock_recv (self->cmdpipe, "s", &self->args.message);
-        s_peer_execute (self, send_chat_event);
+        s_peer_execute (self, please_chat_event);
     }
     //  Cleanup pipe if any argument frames are still waiting to be eaten
     if (zsock_rcvmore (self->cmdpipe)) {
@@ -567,9 +574,6 @@ s_peer_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
 
     //  We will process as many messages as we can, to reduce the overhead
     //  of polling and the reactor:
-    //while (zsock_events (self->dealer) & ZMQ_POLLIN) {
-    //    if (dax_chirp_msg_recv (self->message, self->dealer))
-    //        return -1;              //  Interrupted; exit zloop
    while (zsock_events (zyre_socket(self->zyre)) & ZMQ_POLLIN) {
         zyre_event_t * event = zyre_event_new(self->zyre);
         if (!event)
@@ -580,10 +584,9 @@ s_peer_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
         //Translate the zyre event into a dax_chirp_msg message
         const char* evtype = zyre_event_type(event);
         if (streq("SHOUT", evtype)) {
-            //Use the payload of the shout as our message body
             dax_chirp_msg_recv(self->message,zyre_event_msg(event));
 
-            //Copy over the relevant zyre data
+            //Explicitly fill in group so proto message for whisper may used to shout.
             dax_chirp_msg_set_group(self->message,strdup(zyre_event_group(event)));
         }
         else if (streq("WHISPER", evtype)) {
@@ -639,7 +642,6 @@ dax_chirp_peer (zsock_t *cmdpipe, void *msgpipe)
         //  Set up handler for the sockets the peer uses
         engine_handle_socket ((peer_t *) self, self->cmdpipe, s_peer_handle_cmdpipe);
         engine_handle_socket ((peer_t *) self, self->msgpipe, s_peer_handle_msgpipe);
-        //engine_handle_socket ((peer_t *) self, self->dealer, s_peer_handle_protocol);
         engine_handle_socket ((peer_t *) self, zyre_socket (self->zyre), s_peer_handle_protocol);
         //  Run reactor until there's a termination signal
         zloop_start (self->loop);
@@ -737,15 +739,15 @@ dax_chirp_peer_msgpipe (dax_chirp_peer_t *self)
 
 
 //  ---------------------------------------------------------------------------
-//  Client interface for sending a message into the state machine to broadcast to
-//  the group
+//  Generated from <method>
+//  Client interface for sending a PLEASE_CHAT message into the state machine.
 
 int
-dax_chirp_peer_send_chat (dax_chirp_peer_t *self, const char *message)
+dax_chirp_peer_please_chat (dax_chirp_peer_t *self, const char *message)
 {
     assert (self);
 
-    zsock_send (self->actor, "ss", "SEND CHAT", message);
+    zsock_send (self->actor, "ss", "PLEASE CHAT", message);
     return 0;
 }
 

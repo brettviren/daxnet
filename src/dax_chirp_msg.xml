@@ -9,8 +9,8 @@
     >
   This is a test message for Zyre based protocols.
 
-  Messages must specify at least "uuid" and "name" and shouted
-  messages "group".
+  Messages must specify at least "uuid" and "name".  A group field may
+  be defined.
 
   <message name = "HELLO" >
     <field name = "uuid" type = "string">UUID of the sender</field>
@@ -18,17 +18,19 @@
     <field name = "group" type = "string">Group this message was sent to</field>
   </message>
   
-  A message sent from the API injected into the state machine.
+  A message sent from the API injected into the state machine.  See
+  "please chat" method in dax_chirp_peer.xml.
 
-  <message name = "SEND CHAT" >
+  <message name = "PLEASE CHAT" >
     <field name = "message" type = "string">Chat message to this group</field>
   </message>
+
+  Some chat message
 
   <message name = "CHAT" >
     <field name = "uuid" type = "string">UUID of the sender</field>
     <field name = "name" type = "string">Name of the sender</field>
     <field name = "message" type = "string">Chat message to this group</field>
-
   </message>
 
 
