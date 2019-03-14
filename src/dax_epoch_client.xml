@@ -1,8 +1,8 @@
 <class
-    name = "dax_timeline_client"
-    title = "DAX Timeline Client"
+    name = "dax_epoch_client"
+    title = "DAX Epoch Client"
     script = "zproto_client_c"
-    protocol_class = "dax_timeline"
+    protocol_class = "dax_epoch"
     package_dir = "../include"
     project_header = "dax_classes.h"
     >

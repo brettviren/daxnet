@@ -165,9 +165,8 @@ IF (ENABLE_DRAFTS)
     list(APPEND dax_headers
         include/dax_ident.h
         include/dax_epoch.h
-        include/dax_timeline.h
-        include/dax_timeline_server.h
-        include/dax_timeline_client.h
+        include/dax_epoch_server.h
+        include/dax_epoch_client.h
         include/dax_chirp_msg.h
         include/dax_chirp_peer.h
     )
@@ -189,9 +188,8 @@ IF (ENABLE_DRAFTS)
     list (APPEND dax_sources
         src/dax_ident.c
         src/dax_epoch.c
-        src/dax_timeline.c
-        src/dax_timeline_server.c
-        src/dax_timeline_client.c
+        src/dax_epoch_server.c
+        src/dax_epoch_client.c
         src/dax_chirp_msg.c
         src/dax_chirp_peer.c
     )
@@ -395,9 +393,8 @@ IF (ENABLE_DRAFTS)
     list (APPEND TEST_CLASSES
     dax_ident
     dax_epoch
-    dax_timeline
-    dax_timeline_server
-    dax_timeline_client
+    dax_epoch_server
+    dax_epoch_client
     dax_chirp_msg
     dax_chirp_peer
     )

@@ -19,11 +19,13 @@ if ENABLE_DRAFTS
 src_libdax_la_SOURCES += \
     src/dax_ident.c \
     src/dax_epoch.c \
-    src/dax_timeline.c \
-    src/dax_timeline_server.c \
-    src/dax_timeline_client.c \
+    src/dax_epoch_server.c \
+    src/dax_epoch_server_engine.inc \
+    src/dax_epoch_client.c \
+    src/dax_epoch_client_engine.inc \
     src/dax_chirp_msg.c \
-    src/dax_chirp_peer.c
+    src/dax_chirp_peer.c \
+    src/dax_chirp_peer_engine.inc
 
 endif
 
@@ -73,9 +75,8 @@ src: \
 # Produce generated code from models in the src directory
 code:
 	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_epoch.xml
-	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_timeline.xml
-	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_timeline_server.xml
-	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_timeline_client.xml
+	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_epoch_server.xml
+	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_epoch_client.xml
 	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_chirp_msg.xml
 	cd $(srcdir)/src; gsl -topdir:.. -zproject:1 -q dax_chirp_peer.xml
 	cd $(srcdir); gsl -target:- project.xml
