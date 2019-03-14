@@ -28,6 +28,10 @@ all_tests [] = {
 #ifdef DAX_BUILD_DRAFT_API
 // Tests for draft public classes:
     { "dax_ident", dax_ident_test, false, true, NULL },
+    { "dax_epoch", dax_epoch_test, false, true, NULL },
+    { "dax_timeline", dax_timeline_test, false, true, NULL },
+    { "dax_timeline_server", dax_timeline_server_test, false, true, NULL },
+    { "dax_timeline_client", dax_timeline_client_test, false, true, NULL },
     { "dax_chirp_msg", dax_chirp_msg_test, false, true, NULL },
     { "dax_chirp_peer", dax_chirp_peer_test, false, true, NULL },
 #endif // DAX_BUILD_DRAFT_API

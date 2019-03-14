@@ -1,5 +1,5 @@
 /*  =========================================================================
-    dax_chirp_msg - class description
+    dax_timeline_client - class description
 
     LGPL3, boilerplate to come.
     =========================================================================
@@ -7,7 +7,7 @@
 
 /*
 @header
-    dax_chirp_msg -
+    dax_timeline_client -
 @discuss
 @end
 */
@@ -16,18 +16,18 @@
 
 //  Structure of our class
 
-struct _dax_chirp_msg_t {
+struct _dax_timeline_client_t {
     int filler;     //  Declare class properties here
 };
 
 
 //  --------------------------------------------------------------------------
-//  Create a new dax_chirp_msg
+//  Create a new dax_timeline_client
 
-dax_chirp_msg_t *
-dax_chirp_msg_new (void)
+dax_timeline_client_t *
+dax_timeline_client_new (void)
 {
-    dax_chirp_msg_t *self = (dax_chirp_msg_t *) zmalloc (sizeof (dax_chirp_msg_t));
+    dax_timeline_client_t *self = (dax_timeline_client_t *) zmalloc (sizeof (dax_timeline_client_t));
     assert (self);
     //  Initialize class properties here
     return self;
@@ -35,14 +35,14 @@ dax_chirp_msg_new (void)
 
 
 //  --------------------------------------------------------------------------
-//  Destroy the dax_chirp_msg
+//  Destroy the dax_timeline_client
 
 void
-dax_chirp_msg_destroy (dax_chirp_msg_t **self_p)
+dax_timeline_client_destroy (dax_timeline_client_t **self_p)
 {
     assert (self_p);
     if (*self_p) {
-        dax_chirp_msg_t *self = *self_p;
+        dax_timeline_client_t *self = *self_p;
         //  Free class properties here
         //  Free object itself
         free (self);
@@ -67,15 +67,15 @@ dax_chirp_msg_destroy (dax_chirp_msg_t **self_p)
 #define SELFTEST_DIR_RW "src/selftest-rw"
 
 void
-dax_chirp_msg_test (bool verbose)
+dax_timeline_client_test (bool verbose)
 {
-    printf (" * dax_chirp_msg: ");
+    printf (" * dax_timeline_client: ");
 
     //  @selftest
     //  Simple create/destroy test
-    dax_chirp_msg_t *self = dax_chirp_msg_new ();
+    dax_timeline_client_t *self = dax_timeline_client_new ();
     assert (self);
-    dax_chirp_msg_destroy (&self);
+    dax_timeline_client_destroy (&self);
     //  @end
     printf ("OK\n");
 }

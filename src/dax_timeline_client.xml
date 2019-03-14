@@ -1,0 +1,31 @@
+<class
+    name = "dax_timeline_client"
+    title = "DAX Timeline Client"
+    script = "zproto_client_c"
+    protocol_class = "dax_timeline"
+    package_dir = "../include"
+    project_header = "dax_classes.h"
+    >
+  This is the DAX timeline client implementation.  It talks to the
+  server to get status of the current timeline.
+
+  <include filename = "../license.xml"/>
+
+  <state name = "start">
+    <event name="constructor" next="connected">
+      <action name="connect to server"/>
+      <action name="send" message="STATUS"/>
+    </event>
+  </state>
+  <state name="connected">
+    <event name="TIMELINE" next = "connected">
+      <action name = "terminate"/>
+    </event>
+  </state>
+  <method name="constructor">
+    Connect to timeline server.
+    <field name="endpoint" type="string"/>
+    <field name = "tbeg" type="number" size="8"/>
+  </method>
+
+</class>

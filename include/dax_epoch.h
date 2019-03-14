@@ -1,29 +1,29 @@
 /*  =========================================================================
-    dax_chirp_peer - class description
+    dax_epoch - class description
 
     LGPL3, boilerplate to come.
     =========================================================================
 */
 
-#ifndef DAX_CHIRP_PEER_H_INCLUDED
-#define DAX_CHIRP_PEER_H_INCLUDED
+#ifndef DAX_EPOCH_H_INCLUDED
+#define DAX_EPOCH_H_INCLUDED
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
 //  @interface
-//  Create a new dax_chirp_peer
-DAX_EXPORT dax_chirp_peer_t *
-    dax_chirp_peer_new (void);
+//  Create a new dax_epoch
+DAX_EXPORT dax_epoch_t *
+    dax_epoch_new (void);
 
-//  Destroy the dax_chirp_peer
+//  Destroy the dax_epoch
 DAX_EXPORT void
-    dax_chirp_peer_destroy (dax_chirp_peer_t **self_p);
+    dax_epoch_destroy (dax_epoch_t **self_p);
 
 //  Self test of this class
 DAX_EXPORT void
-    dax_chirp_peer_test (bool verbose);
+    dax_epoch_test (bool verbose);
 
 //  @end
 

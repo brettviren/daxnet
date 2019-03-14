@@ -5,7 +5,6 @@
     title = "DAX Chirp Message Protocol"
     script = "zproto_codec_c"
     package_dir = "../include"
-    source_dir = "."
     >
   This is a test message for Zyre based protocols.
 

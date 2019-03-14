@@ -129,3 +129,8 @@ nbproject/
 # editor backups
 *~
 Makemodule-local.am
+log
+*.pdf
+*.tex
+ltximg
+auto

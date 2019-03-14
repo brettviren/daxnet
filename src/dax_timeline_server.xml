@@ -1,0 +1,37 @@
+<class
+    name = "dax_timeline_server"
+    title = "DAX Timeline server"
+    script = "zproto_server_c"
+    protocol_class = "dax_timeline"
+    package_dir = "../include"
+    project_header = "dax_classes.h"
+    >
+  The DAX timeline server provides the current epoch timline.
+  <include filename = "../license.xml" />
+  
+  <state name = "start" inherit = "defaults">
+    <event name = "STATUS" next = "start">
+      <action name = "send timeline" />
+      <action name = "terminate" />
+    </event>
+  </state>
+
+  <state name = "defaults">
+    <!-- This built-in event hits on a client timeout -->
+    <event name = "expired">
+      <action name = "terminate" />
+    </event>
+    <!-- Client tried to do something we don't allow yet -->
+    <event name = "exception">
+      <action name = "send" message = "ERROR" />
+      <action name = "terminate" />
+    </event>
+    <!-- All other protocol messages are invalid -->
+    <event name = "*">
+      <action name = "signal command invalid" />
+      <action name = "send" message = "ERROR" />
+      <action name = "terminate" />
+    </event>
+  </state>
+
+</class>

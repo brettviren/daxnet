@@ -1,0 +1,103 @@
+#+title: DAX Epoch
+#+LATEX_HEADER: \usepackage[margin=1.0in]{geometry}
+
+* Introduction
+
+A DAX epoch is defined over a *scope* and is represented by an integer number ("epoch number" or "epoch count") to which is associated a *configuration* and an epoch *span*.  A span is a period of time measured in a particular, singular *clock*.  Ends of this span define epoch *boundaries* across which there may occur epoch *transitions*.  New epochs may be *declared* and existing epochs may be *terminated*.  The set of all epochs which have not been terminated is called the *epoch timeline*.  These terms are defined next.
+
+** Epoch scope
+
+The *scope* of an epoch is the set of applications to be created, operated and configured during the epoch *span*.  The exact definition is determined by the particular DAX use case.  For the DUNE FD DAQ, a *scope* is expected to cover either a single 10kt module or the entire FD DAQ complex.
+
+** Epoch clocks
+
+There are two clocks relevant the measure of time for DAX epochs.  The *data clock* measuring *data time* is used to define an epoch *span*.  This clock must be shared across the entire epoch *scope*.   
+
+For the DUNE DAQ, this clock is expected to be the hardware clock which measure the time of digitization by the detector electronics.  It is important to understand that conceptually the *data clock* measures time at a specific point in "space".  In practice, it is applied across the detector electronics but as it is expected to be a hard-wire signal propagating near the speed of light, it is considered instantaneous compared to the more prosaic transmission times involved in the DAX network.
+
+
+The second clock is the *wall clock* measuring *real time*.  In practice, this clock is actually many clocks maintained by computer systems and synchronized by the DAQ PTP service and they are assumed to be consistent only to the level of a microsecond.  As new epochs are declared their *epoch numbers* shall monotonically increase and without gaps over this *real time*.
+
+The /data clock/ is expected to count ticks of a hardware clock (eg, of the 50 MHz clock at protoDUNE) and the /wall clock/ shall count integral microseconds from the start of the Unix Epoch.  Thus, to about the level of precision of one /wall clock/ count, the two clocks may be related by a linear transformation.
+
+However, it is very important to know that because of the limited precision and accuracy of the various wall clocks, no meaningful comparison between two wall clocks may be made if they differ by less than a few ticks.  It also must be accepted that failures in PTP sync can lead to clock drift between different wall clocks.  With specific exception described below, wall clock time *shall not* be compared to /data time/ and may only be compared to other wall clock times in a coarse manner where precision and drift will not negatively impact operation.
+
+** Epoch spans
+
+Epochs may be *declared* with a /data time/ span which overlaps or precedes prior epoch spans.  For any given moment in /data time/ the time span of the newest epoch (highest epoch number) shall override others for determining the applicable epoch.  
+
+As a consequence, and in general, epoch numbers will not be monotonic as viewed in /data time/ (unlike when viewed in /wall clock/ time).  Consumers of epoch information must thus maintain a timeline of *declared* epochs and determine which  epoch applies for any given data message and make any needed preparations for epoch *transitions*.
+
+** Epoch declaration
+
+An epoch *declaration* is made by allocating the next available epoch number, associating a time span and announcing this resulting 3-tuple (number, data time begin, data time end) to the DAX network.  
+
+Conceptually, epoch declarations come from a singleton *epoch source* unique to the *epoch span*.  Implementations may deploy redundant sources only if it is assured that all epochs declared with a given number also have identical span (ie, the sources mirror each other).
+
+An epoch should be declared with a span that is sufficiently after the current /data time/ if the intended configuration is expected to be applied over its intended span.  In practice, an epoch may be declared after the /data time/ of its start time has already elapsed.  Application of such tardy epochs is not well defined in that any given consumer of the epoch will apply its configuration based on the real time which it receives the epoch declaration.  Across the epoch *scope*, this will lead to inconsistent epoch transitions in /data time/.
+
+** Epoch termination
+
+An epoch may be considered terminated in two cases.  
+
+1. the currently observed data time is after the end time of the epoch
+2. an explicit *epoch termination* is declared
+
+Individually maintained timelines shall be updated as new epoch declarations or terminations are encountered.  Any terminated epoch may be forgotten by an application and its associated memory freed.
+
+
+** Epoch timeline
+
+An epoch *timeline* is the set of all currently (currently in terms of /wall clock/ time) known epochs which have not yet been terminated and which are organized into a linear array in /data time/ such that all /temporally contiguous/ spans may be identified with a particular epoch.  The timeline thus resolves any epoch overlaps and for any given /data time/ provides the next expected epoch *transition*.  
+
+The epoch source maintains a definitive timeline.  An epoch consumer may subscribe to epoch declarations, queuing them, then request from the source a copy of the current timeline, then apply any queued epochs which have not yet been incorporated.  Thus, the timeline may be safely distributed[fn:reliable-pub-sub].
+
+
+[fn:reliable-pub-sub] This is simply the "reliable pub/sub" pattern from the ZeroMQ guide, chapter 5.  http://zguide.zeromq.org/page:all#toc119 
+
+
+DAX nodes consume epochs in order to know when and how to reconfigure themselves.  They know the when by comparing the /data time/ found in their in-band data to the /data time/ in their timeline.   They know the how by using the next epoch number to query the configuration service (see [[./dax-config.org][DAX configuration service]]).  
+
+Reconfiguration of a node may take some amount of (/wall clock/) time depending on the exact nature of the node and its configuration time.  If this time is small compared the amount of input buffering the node requests[fn:hwm] then it may simply check each input message against its timeline to determine if it just crossed an epoch transition.  When a transition is encountered it may hold the most recent message, enact the transition, and then continue operation starting with the held message. 
+
+
+[fn:hwm] ZeroMQ allows for a "high water mark" to be configurable and is a good way to provide any needed buffering as it managed  transparently to the node application code.
+
+
+It may be the case that the (/wall clock/) time required for a given node to apply a reconfiguration is substantially larger than buffering will support or beyond the time any contract with the epoch source may allow (see section [[Example]]).  In such cases, the node may be designed to pre-configure itself in order to minimize transition (/wall clock/) time.  In such a strategy the design must be prepared to discard the pre-configuration if a new, last minute epoch is declared.
+
+** Epoch configuration
+
+The intended epoch configuration is only indirectly associated with an epoch via the epoch number.  In order to assure no tardiness, a configuration should be prepared prior to the epoch declaration.  In practice the associated configuration may not always be available at the time of epoch declaration.  The configuration mechanism ([[./dax-config.org][described elsewhere]]) must service requests for tardy configurations before they are available.   It is worth recognizing here that the intended configuration may be (and often will be) identical, aka reused, between any two epochs.  
+
+
+** Example
+
+As an (abstract) example, we start with a DAX network operating in epoch $N_0$ which spans far in the past to far in the future.  This epoch may be associated with some nominal or "standard" configuration. 
+
+At some point in (real) time, the operators (humans or expert systems) of the DAX network determine a configuration change is required.  The operators start by determining the applicable configuration, possibly creating it anew if it is indeed novel.  
+
+The operators then determine a desired /data time/ span for the new epoch.  If the start of this span is "ASAP" then the *epoch source* shall determine an appropriate start time to avoid the epoch being tardy.  This start time will chosen based on the current /data time/ as it is known by the epoch source and advanced appropriately.  The current /data time/ may be determined in a few ways or in their combination.  For example, the epoch source may implicitly transform its current PTP synchronized /wall clock/ time into /data time/ (one of the few allowed exceptions to the rule that was mentioned above).  It may querying the nodes providing ultimate input data to the DAX network for their current /data time/ and then add a worse case network response delay (basically, poor-mans PTP).  It may do both and take latest result.  To this understanding of current /data time/ the source shall add another delay, expected to be on order seconds to minutes, when finally determining the start time of the epoch span.
+
+The epoch source then *declares* the epoch as described in the technical sections below to the DAX network and each individual consumer receives the epoch and makes preparations for its enactment in the manner suiting their operation.
+
+* DAX Epoch Protocol and CLASSes
+
+The DAX epoch protocol operates following the "reliable pub/sub" pattern between an epoch "server" and an epoch "client".  The server provides epoch declaration and termination messages from a PUB socket and responds to queries on a ROUTER socket.  The client has a SUB and DEALER or REQ.
+
+The DAX epoch message types for the PUB/SUB protocol are:
+
+- debut :: declares a new epoch, number and time span
+
+- rescind :: an epoch number, marks the epoch as invalid
+
+The DAX epoch message types for the ROUTER request and response are:
+
+- status :: (request) ask for a timeline starting at the given data time
+
+- timeline :: (respond) provide current timeline as a series of epoch debut messages which are valid past the given data time.  This sequence will be ordered but epoch numbers may have gaps as epochs that are no long valid or are vestigial may not be included.
+
+
+
+
+
