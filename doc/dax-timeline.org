@@ -1,0 +1,44 @@
+#+title DAX Timeline
+
+* Introduction
+
+As described in [[./dax-epoch.org][DAX Epochs]], an epoch is as a 3-tuple of numbers:
+
+- epoch number :: a non-negative integer monotonically increasing for each new epoch definition
+- begin tick :: a starting /data time/ measured in the hardware clock as a signed 64bit integer
+- end tick :: an ending /data time/ measured in the same clock and greater than the starting time
+
+As multiple epochs are declared and some are potentially rescinded, the epoch that shall apply to any given tick of the /data time/ hardware clock time of ~tick~ is the one which:
+
+- has been declared and not rescinded
+- overlaps the time as defined by: ~begin <= tick < end~.
+- has the highest epoch number of all otherwise satisfying epochs.
+
+*  Timeline representation
+
+The timeline is represented as an ordered list of /transitions/.  Each transition has these attributes:
+
+- tick :: a value of the 64bit hardware /data time/ clock
+- markers :: three ordered sets of epoch numbers
+
+The markers sets are:
+
+- begs :: all epoch numbers of epochs which start on this transition
+- ends :: all epoch numbers of epochs which end on this transition
+- ints :: all epoch numbers of epochs which have this tick in side their interval (but not in beg)
+
+As a new epoch message arrives the timeline will insert it following this algorithm:
+
+1. Find the two transitions that bound the new epoch start
+2. Insert a new transition at the new epoch tick between the two existing ones
+3. Set the markers of the new transition based on those of the two bounding transitions.
+
+Do similar for the new epoch end and properly handle the edge case where there are zero or one previous transitions providing no or partial bounding.
+
+When an epoch is rescinded, the transition which holds the epoch number in a ~begs~ marker set is found as are all subsequent transitions with the epoch number in their ~ints~ marker sets and the final one with the epoch number in its ~ends~ marker set.  From all these sets the rescinded epoch number is removed.  If this leaves a transition void of any markers it is removed from the timeline.
+
+* Timeline queries
+
+The fundamental queries on the timeline are to locate the nearest transition given a ~tick~ value.  Worse case, this is $\mathcal{O(N)}$ in the number of transitions as it requires a linear search of the list.  Most queries are expected to be sequential in ~tick~ and so the Timeline will cache the iterator of the last transition located.
+
+ 
