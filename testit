@@ -1,0 +1,8 @@
+#!/bin/bash
+mydir="$(dirname ${BASH_SOURCE})"
+if [ "$1" = "debug" ] ; then
+   shift;
+   LD_LIBRARY_PATH="${mydir}/src/.libs:${HOME}/opt/zmq/lib" gdb --args "${mydir}/src/.libs/dax_selftest" $@
+else
+   LD_LIBRARY_PATH="${mydir}/src/.libs:${HOME}/opt/zmq/lib" "${mydir}/src/.libs/dax_selftest" $@
+fi       

@@ -85,18 +85,23 @@ The epoch source then *declares* the epoch as described in the technical section
 
 The DAX epoch protocol operates following the "reliable pub/sub" pattern between an epoch "server" and an epoch "client".  The server provides epoch declaration and termination messages from a PUB socket and responds to queries on a ROUTER socket.  The client has a SUB and DEALER or REQ.
 
-The DAX epoch message types for the PUB/SUB protocol are:
+** Message Codec
+
+The DAX epoch message types are
 
 - debut :: declares a new epoch, number and time span
 
 - rescind :: an epoch number, marks the epoch as invalid
 
-The DAX epoch message types for the ROUTER request and response are:
 
 - status :: (request) ask for a timeline starting at the given data time
 
 - timeline :: (respond) provide current timeline as a series of epoch debut messages which are valid past the given data time.  This sequence will be ordered but epoch numbers may have gaps as epochs that are no long valid or are vestigial may not be included.
 
+
+** Timeline API
+
+The ~dax_timeline~ API collects epoch *debut* and *rescind* messages and builds a linear timeline of epoch transitions which may be queried by a /data time/ in order to determine current and next epochs.
 
 
 

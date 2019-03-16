@@ -8,7 +8,7 @@
 ########################################################################
 cmake_minimum_required(VERSION 2.8.8)
 project(daxnet)
-enable_language(C)
+enable_language(CXX)
 enable_testing()
 
 set(SOURCE_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
@@ -63,7 +63,7 @@ configure_file("${CMAKE_BINARY_DIR}/platform.h.in" "${CMAKE_BINARY_DIR}/platform
 #so the sources have to be compiled as c++
 if (MSVC)
     enable_language(CXX)
-    file(GLOB sources "${SOURCE_DIR}/src/*.c")
+    file(GLOB sources "${SOURCE_DIR}/src/*.cc")
     set_source_files_properties(
         ${sources}
         PROPERTIES LANGUAGE CXX
@@ -169,6 +169,8 @@ IF (ENABLE_DRAFTS)
         include/dax_epoch_client.h
         include/dax_chirp_msg.h
         include/dax_chirp_peer.h
+        include/timeline.h
+        include/dax_timeline.h
     )
 ENDIF (ENABLE_DRAFTS)
 
@@ -186,18 +188,20 @@ set (dax_sources
 
 IF (ENABLE_DRAFTS)
     list (APPEND dax_sources
-        src/dax_ident.c
-        src/dax_epoch.c
-        src/dax_epoch_server.c
-        src/dax_epoch_client.c
-        src/dax_chirp_msg.c
-        src/dax_chirp_peer.c
+        src/dax_ident.cc
+        src/dax_epoch.cc
+        src/dax_epoch_server.cc
+        src/dax_epoch_client.cc
+        src/dax_chirp_msg.cc
+        src/dax_chirp_peer.cc
+        src/timeline.cc
+        src/dax_timeline.cc
     )
 ENDIF (ENABLE_DRAFTS)
 
 IF (ENABLE_DRAFTS)
     list (APPEND dax_sources
-        src/dax_private_selftest.c
+        src/dax_private_selftest.cc
     )
 ENDIF (ENABLE_DRAFTS)
 
@@ -349,7 +353,7 @@ install(FILES ${CMAKE_CURRENT_BINARY_DIR}/daxConfig.cmake
 ########################################################################
 add_executable(
     dax_selftest
-    "${SOURCE_DIR}/src/dax_selftest.c"
+    "${SOURCE_DIR}/src/dax_selftest.cc"
 )
 if (TARGET dax)
 target_link_libraries(
@@ -397,6 +401,8 @@ IF (ENABLE_DRAFTS)
     dax_epoch_client
     dax_chirp_msg
     dax_chirp_peer
+    timeline
+    dax_timeline
     )
 ENDIF (ENABLE_DRAFTS)
 

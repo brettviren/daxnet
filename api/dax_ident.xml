@@ -17,6 +17,8 @@
   Subsequently, the application may call dax_ident methods to learn
   about the state of other identifies on the network.
 
+  <include filename = "../license.xml"/>
+
   <constructor>
     Create a DAX identity.
   </constructor>

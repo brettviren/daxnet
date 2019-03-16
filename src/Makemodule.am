@@ -17,24 +17,27 @@ src_libdax_la_SOURCES = \
 
 if ENABLE_DRAFTS
 src_libdax_la_SOURCES += \
-    src/dax_ident.c \
-    src/dax_epoch.c \
-    src/dax_epoch_server.c \
+    src/dax_ident.cc \
+    src/dax_epoch.cc \
+    src/dax_epoch_server.cc \
     src/dax_epoch_server_engine.inc \
-    src/dax_epoch_client.c \
+    src/dax_epoch_client.cc \
     src/dax_epoch_client_engine.inc \
-    src/dax_chirp_msg.c \
-    src/dax_chirp_peer.c \
-    src/dax_chirp_peer_engine.inc
+    src/dax_chirp_msg.cc \
+    src/dax_chirp_peer.cc \
+    src/dax_chirp_peer_engine.inc \
+    src/timeline.cc \
+    src/dax_timeline.cc
 
 endif
 
 if ENABLE_DRAFTS
 src_libdax_la_SOURCES += \
-    src/dax_private_selftest.c
+    src/dax_private_selftest.cc
 endif
 
 src_libdax_la_CPPFLAGS = ${AM_CPPFLAGS}
+src_libdax_la_CXXFLAGS = ${AM_CXXFLAGS}
 
 src_libdax_la_LDFLAGS = \
     -version-info @LTVER@ \
@@ -59,13 +62,16 @@ check_PROGRAMS += src/dax_selftest
 noinst_PROGRAMS += src/dax_selftest
 src_dax_selftest_CPPFLAGS = ${AM_CPPFLAGS}
 src_dax_selftest_LDADD = ${program_libs}
-src_dax_selftest_SOURCES = src/dax_selftest.c
+src_dax_selftest_SOURCES = src/dax_selftest.cc
 endif #ENABLE_DAX_SELFTEST
 
 # Install api files into /usr/local/share/zproject
 apidir = @datadir@/zproject/daxnet
 dist_api_DATA = \
-    api/dax_ident.xml
+    api/../license.xml \
+    api/dax_ident.xml \
+    api/../license.xml \
+    api/dax_timeline.xml
 
 # define custom target for all products of /src
 src: \
@@ -209,7 +215,7 @@ coverage: src/dax_selftest $(top_builddir)/$(SELFTEST_DIR_RW) $(top_builddir)/$(
 	$(MAKE) check
 	lcov --base-directory . --directory . --capture -o coverage.info
 	lcov --remove coverage.info "/usr*" -o coverage.info
-	lcov --remove coverage.info "dax_selftest.c" -o coverage.info
+	lcov --remove coverage.info "dax_selftest.cc" -o coverage.info
 	$(RM) -rf coverage/*
 	genhtml -o coverage/ -t "daxnet test coverage" --num-spaces 4 coverage.info
 else
@@ -341,7 +347,7 @@ endif
 
 cppcheck.xml:
 	@echo "Performing cppcheck static analysis..."
-	cppcheck --enable=all --inconclusive --xml --xml-version=2 . 2>"$@"
+	cppcheck --std=c++11 --enable=all --inconclusive --xml --xml-version=2 . 2>"$@"
 	@echo "The cppcheck static analysis is done"
 
 # Note: this recipe tests that the Git-based workspace reports no changed
