@@ -9,21 +9,15 @@
 @header
     dax_timeline - A DAX timeline holds the state of multiple epoch declarations.
 @discuss
-
-The timeline works by layering epoch after epoch onto a linear order
-of transitions.  
-
 @end
 */
 
 #include "dax_classes.h"
 
-
-
 //  Structure of our class
+
 struct _dax_timeline_t {
-    dax_epoch_client_t* epoch_client;
-    bool feeding;               /* if feed() has been called */
+    int filler;     //  Declare class properties here
 };
 
 
@@ -31,14 +25,11 @@ struct _dax_timeline_t {
 //  Create a new dax_timeline
 
 dax_timeline_t *
-dax_timeline_new (int64_t tbeg)
+dax_timeline_new (int64_t tick)
 {
     dax_timeline_t *self = (dax_timeline_t *) zmalloc (sizeof (dax_timeline_t));
     assert (self);
     //  Initialize class properties here
-
-    self->epoch_client = dax_epoch_client_new();
-
     return self;
 }
 
@@ -50,17 +41,13 @@ void
 dax_timeline_destroy (dax_timeline_t **self_p)
 {
     assert (self_p);
-    if (!*self_p) {
-        return;
+    if (*self_p) {
+        dax_timeline_t *self = *self_p;
+        //  Free class properties here
+        //  Free object itself
+        free (self);
+        *self_p = NULL;
     }
-    dax_timeline_t *self = *self_p;
-    //  Free class properties here
-    dax_epoch_client_destroy(&self->epoch_client);
-
-    //  Free object itself
-    free (self);
-    *self_p = NULL;
-
 }
 
 //  --------------------------------------------------------------------------
@@ -86,7 +73,7 @@ dax_timeline_test (bool verbose)
 
     //  @selftest
     //  Simple create/destroy test
-    dax_timeline_t *self = dax_timeline_new (zclock_usecs());
+    dax_timeline_t *self = dax_timeline_new (0);
     assert (self);
     dax_timeline_destroy (&self);
     //  @end

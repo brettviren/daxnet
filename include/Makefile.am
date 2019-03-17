@@ -14,7 +14,6 @@ include_HEADERS += \
     dax_epoch_client.h \
     dax_chirp_msg.h \
     dax_chirp_peer.h \
-    timeline.h \
     dax_timeline.h
 
 endif

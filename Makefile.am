@@ -5,14 +5,11 @@
 
 ACLOCAL_AMFLAGS = -I config
 
-AM_CXXFLAGS = \
-    -std=c++11
 
 AM_CPPFLAGS = \
     ${libzmq_CFLAGS} \
     ${czmq_CFLAGS} \
     ${zyre_CFLAGS} \
-    -D__STDC_FORMAT_MACROS \
     -I$(srcdir)/include
 
 project_libs = ${libzmq_LIBS} ${czmq_LIBS} ${zyre_LIBS}
