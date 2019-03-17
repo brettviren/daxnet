@@ -34,6 +34,9 @@ struct _server_t {
     zconfig_t *config;          //  Current loaded configuration
 
     //  TODO: Add any properties you need here
+    zsock_t* pub;               /* Socket to send epoch debuts and rescinds */
+    const char* pub_endpoint;   /* its endpoint */
+    int last_epoch;             /* number of last epoch to see/send */
 };
 
 //  ---------------------------------------------------------------------------
@@ -59,8 +62,12 @@ struct _client_t {
 static int
 server_initialize (server_t *self)
 {
-    ZPROTO_UNUSED(self);
-    //  Construct properties here
+    self->pub = zsock_new_pub("tcp://*:*");
+    assert(self->pub);
+    self->pub_endpoint = zsock_endpoint(self->pub);
+    
+    self->last_epoch = -1;
+
     return 0;
 }
 
@@ -69,8 +76,8 @@ server_initialize (server_t *self)
 static void
 server_terminate (server_t *self)
 {
-    ZPROTO_UNUSED(self);
-    //  Destroy properties here
+    zsock_destroy(&self->pub);
+    self->pub_endpoint = NULL;
 }
 
 //  Process server API method, return reply message if any
@@ -78,9 +85,11 @@ server_terminate (server_t *self)
 static zmsg_t *
 server_method (server_t *self, const char *method, zmsg_t *msg)
 {
-    ZPROTO_UNUSED(self);
-    ZPROTO_UNUSED(method);
-    ZPROTO_UNUSED(msg);
+    zmsg_t *reply = NULL;
+    if (streq(method, "DEBUT")) {
+
+    }
+
     return NULL;
 }
 
@@ -153,7 +162,7 @@ dax_epoch_server_test (bool verbose)
 static void
 send_timeline (client_t *self)
 {
-
+    
 }
 
 

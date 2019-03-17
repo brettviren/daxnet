@@ -14,6 +14,12 @@
       <action name = "send timeline" />
       <action name = "terminate" />
     </event>
+
+    <event name = "debut" next = "start">
+      <action name = "store debut" />
+      <action name = "terminate" />
+    </event>
+
   </state>
 
   <state name = "defaults">
