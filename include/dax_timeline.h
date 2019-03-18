@@ -20,7 +20,7 @@ extern "C" {
 //  *** Draft method, for development use, may change without warning ***
 //  Create a DAX identity.
 DAX_EXPORT dax_timeline_t *
-    dax_timeline_new (int64_t tbeg);
+    dax_timeline_new (void);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Destroy the DAX identity.  This will cause the network to learn of

@@ -7,7 +7,9 @@
 
   <constructor>
     Create a DAX identity.
+    <!-- 
     <argument name = "tbeg" c_type = "int64_t">Requested start of timeline</argument>
+    -->
   </constructor>
 
   <destructor>

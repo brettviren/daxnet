@@ -21,20 +21,18 @@
   <class name = "dax_acc" />
   -->
 
-  <!-- 
   <class name = "dax_epoch" />
   <class name = "dax_epoch_server" />
   <class name = "dax_epoch_client" />
   <class name = "dax_chirp_msg" />
   <class name = "dax_chirp_peer" />
-  -->
-
-  <class name = "dax_timeline"/>
 
   <model name = "dax_epoch" />
   <model name = "dax_epoch_server" />
   <model name = "dax_epoch_client" />
   <model name = "dax_chirp_msg" />
   <model name = "dax_chirp_peer" />
+
+  <class name = "dax_timeline"/>
 
 </project>

@@ -110,7 +110,7 @@ connect_to_server (client_t *self)
 static void
 new_timeline (client_t *self)
 {
-    zsock_send(self->msgpipe, "sp", "TIMELINE", dax_epoch_timeline......);
+//    zsock_send(self->msgpipe, "sp", "TIMELINE", dax_epoch_timeline......);
 }
 
 
@@ -121,11 +121,11 @@ new_timeline (client_t *self)
 static void
 subscribe (client_t *self)
 {
-    self->sub = zsock_new_sub(self->args->publisher);
-    if (!self->sub) {
-        return -1;
-    }
-    engine_handle_socket (self, self->sub, s_client_handle_publish);
+    /* self->sub = zsock_new_sub(self->args->publisher); */
+    /* if (!self->sub) { */
+    /*     return -1; */
+    /* } */
+    /* engine_handle_socket (self, self->sub, s_client_handle_publish); */
 }
 
 
@@ -136,7 +136,7 @@ subscribe (client_t *self)
 static void
 forward_debut (client_t *self)
 {
-    zsock_send(self->msgpipe, "sp", "DEBUT", ....);
+//    zsock_send(self->msgpipe, "sp", "DEBUT", ....);
 }
 
 
@@ -147,5 +147,5 @@ forward_debut (client_t *self)
 static void
 forward_rescind (client_t *self)
 {
-    zsock_send(self->msgpipe, "sp", "RESCIND", ....);
+//    zsock_send(self->msgpipe, "sp", "RESCIND", ....);
 }

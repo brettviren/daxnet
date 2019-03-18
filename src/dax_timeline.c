@@ -25,7 +25,7 @@ struct _dax_timeline_t {
 //  Create a new dax_timeline
 
 dax_timeline_t *
-dax_timeline_new (int64_t tick)
+dax_timeline_new (void)
 {
     dax_timeline_t *self = (dax_timeline_t *) zmalloc (sizeof (dax_timeline_t));
     assert (self);
@@ -73,7 +73,7 @@ dax_timeline_test (bool verbose)
 
     //  @selftest
     //  Simple create/destroy test
-    dax_timeline_t *self = dax_timeline_new (0);
+    dax_timeline_t *self = dax_timeline_new ();
     assert (self);
     dax_timeline_destroy (&self);
     //  @end

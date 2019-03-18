@@ -18,6 +18,14 @@ src_libdax_la_SOURCES = \
 if ENABLE_DRAFTS
 src_libdax_la_SOURCES += \
     src/dax_ident.c \
+    src/dax_epoch.c \
+    src/dax_epoch_server.c \
+    src/dax_epoch_server_engine.inc \
+    src/dax_epoch_client.c \
+    src/dax_epoch_client_engine.inc \
+    src/dax_chirp_msg.c \
+    src/dax_chirp_peer.c \
+    src/dax_chirp_peer_engine.inc \
     src/dax_timeline.c
 
 endif

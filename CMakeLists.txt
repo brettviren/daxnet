@@ -164,6 +164,11 @@ set (dax_headers
 IF (ENABLE_DRAFTS)
     list(APPEND dax_headers
         include/dax_ident.h
+        include/dax_epoch.h
+        include/dax_epoch_server.h
+        include/dax_epoch_client.h
+        include/dax_chirp_msg.h
+        include/dax_chirp_peer.h
         include/dax_timeline.h
     )
 ENDIF (ENABLE_DRAFTS)
@@ -183,6 +188,11 @@ set (dax_sources
 IF (ENABLE_DRAFTS)
     list (APPEND dax_sources
         src/dax_ident.c
+        src/dax_epoch.c
+        src/dax_epoch_server.c
+        src/dax_epoch_client.c
+        src/dax_chirp_msg.c
+        src/dax_chirp_peer.c
         src/dax_timeline.c
     )
 ENDIF (ENABLE_DRAFTS)
@@ -384,6 +394,11 @@ set(TEST_CLASSES
 IF (ENABLE_DRAFTS)
     list (APPEND TEST_CLASSES
     dax_ident
+    dax_epoch
+    dax_epoch_server
+    dax_epoch_client
+    dax_chirp_msg
+    dax_chirp_peer
     dax_timeline
     )
 ENDIF (ENABLE_DRAFTS)
