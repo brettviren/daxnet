@@ -33,11 +33,26 @@ typedef struct {
     dax_epoch_t *message;       //  Message to/from server
     client_args_t *args;        //  Arguments from methods
 
-    //  TODO: Add specific properties for your application
+    zsock_t* sub;               /* listen for updates */
+
 } client_t;
 
 //  Include the generated client engine
 #include "dax_epoch_client_engine.inc"
+
+
+// Handle messages on the SUB socket
+
+static int
+s_client_handle_publish (zloop_t *loop, zsock_t *reader, void *argument)
+{
+    client_t *self = (client_t *) argument;
+
+    // call:
+    // engine_set_next_event (self, new_epoch);
+
+    return 0;
+}
 
 //  Allocate properties and structures for a new client instance.
 //  Return 0 if OK, -1 if failed
@@ -53,7 +68,7 @@ client_initialize (client_t *self)
 static void
 client_terminate (client_t *self)
 {
-    //  Destroy properties here
+    zsock_destroy(&self->sub);
 }
 
 
@@ -84,4 +99,53 @@ dax_epoch_client_test (bool verbose)
 static void
 connect_to_server (client_t *self)
 {
+    // This is called between connect and the automated call for STATUS
+}
+
+
+//  ---------------------------------------------------------------------------
+//  new_timeline
+//
+
+static void
+new_timeline (client_t *self)
+{
+    zsock_send(self->msgpipe, "sp", "TIMELINE", dax_epoch_timeline......);
+}
+
+
+//  ---------------------------------------------------------------------------
+//  subscribe
+//
+
+static void
+subscribe (client_t *self)
+{
+    self->sub = zsock_new_sub(self->args->publisher);
+    if (!self->sub) {
+        return -1;
+    }
+    engine_handle_socket (self, self->sub, s_client_handle_publish);
+}
+
+
+//  ---------------------------------------------------------------------------
+//  forward_debut
+//
+
+static void
+forward_debut (client_t *self)
+{
+    zsock_send(self->msgpipe, "sp", "DEBUT", ....);
+}
+
+
+//  ---------------------------------------------------------------------------
+//  forward_rescind
+//
+
+static void
+forward_rescind (client_t *self)
+{
+    zsock_send(self->msgpipe, "sp", "RESCIND", ....);
 }

@@ -86,16 +86,6 @@
 #ifdef DAX_BUILD_DRAFT_API
 typedef struct _dax_ident_t dax_ident_t;
 #define DAX_IDENT_T_DEFINED
-typedef struct _dax_epoch_t dax_epoch_t;
-#define DAX_EPOCH_T_DEFINED
-typedef struct _dax_epoch_server_t dax_epoch_server_t;
-#define DAX_EPOCH_SERVER_T_DEFINED
-typedef struct _dax_epoch_client_t dax_epoch_client_t;
-#define DAX_EPOCH_CLIENT_T_DEFINED
-typedef struct _dax_chirp_msg_t dax_chirp_msg_t;
-#define DAX_CHIRP_MSG_T_DEFINED
-typedef struct _dax_chirp_peer_t dax_chirp_peer_t;
-#define DAX_CHIRP_PEER_T_DEFINED
 typedef struct _dax_timeline_t dax_timeline_t;
 #define DAX_TIMELINE_T_DEFINED
 #endif // DAX_BUILD_DRAFT_API
@@ -104,11 +94,6 @@ typedef struct _dax_timeline_t dax_timeline_t;
 //  Public classes, each with its own header file
 #ifdef DAX_BUILD_DRAFT_API
 #include "dax_ident.h"
-#include "dax_epoch.h"
-#include "dax_epoch_server.h"
-#include "dax_epoch_client.h"
-#include "dax_chirp_msg.h"
-#include "dax_chirp_peer.h"
 #include "dax_timeline.h"
 #endif // DAX_BUILD_DRAFT_API
 

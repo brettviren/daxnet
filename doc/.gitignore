@@ -13,16 +13,6 @@
 # Ignore the source doc texts generated from program sources
 dax_ident.txt
 dax_ident.doc
-dax_epoch.txt
-dax_epoch.doc
-dax_epoch_server.txt
-dax_epoch_server.doc
-dax_epoch_client.txt
-dax_epoch_client.doc
-dax_chirp_msg.txt
-dax_chirp_msg.doc
-dax_chirp_peer.txt
-dax_chirp_peer.doc
 dax_timeline.txt
 dax_timeline.doc
 

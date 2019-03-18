@@ -20,13 +20,16 @@
 
 typedef enum {
     start_state = 1,
-    connected_state = 2
+    connected_state = 2,
+    updating_state = 3
 } state_t;
 
 typedef enum {
     NULL_event = 0,
     constructor_event = 1,
-    timeline_event = 2
+    timeline_event = 2,
+    new_epoch_event = 3,
+    del_epoch_event = 4
 } event_t;
 
 //  Names for state machine logging and error reporting
@@ -34,14 +37,17 @@ static char *
 s_state_name [] = {
     "(NONE)",
     "start",
-    "connected"
+    "connected",
+    "updating"
 };
 
 static char *
 s_event_name [] = {
     "(NONE)",
     "constructor",
-    "TIMELINE"
+    "TIMELINE",
+    "new_epoch",
+    "del_epoch"
 };
 
 
@@ -53,6 +59,7 @@ s_event_name [] = {
 //  These are the different method arguments we manage automatically
 struct _client_args_t {
     char *endpoint;
+    char *publisher;
     uint64_t tbeg;
 };
 
@@ -95,6 +102,14 @@ static void
     s_satisfy_pedantic_compilers (void);
 static void
     connect_to_server (client_t *self);
+static void
+    new_timeline (client_t *self);
+static void
+    subscribe (client_t *self);
+static void
+    forward_debut (client_t *self);
+static void
+    forward_rescind (client_t *self);
 
 //  Create a new client connection
 
@@ -141,6 +156,7 @@ s_client_destroy (s_client_t **self_p)
     if (*self_p) {
         s_client_t *self = *self_p;
         zstr_free (&self->args.endpoint);
+        zstr_free (&self->args.publisher);
         client_terminate (&self->client);
         dax_epoch_destroy (&self->message);
         zsock_destroy (&self->msgpipe);
@@ -335,8 +351,6 @@ s_client_execute (s_client_t *self, event_t event)
                             zsys_debug ("%s:         $ send STATUS",
                                 self->log_prefix);
                         dax_epoch_set_id (self->message, DAX_EPOCH_STATUS);
-                        zsys_debug ("%s: Send message to server", self->log_prefix);
-                        dax_epoch_print (self->message);
                         dax_epoch_send (self->message, self->dealer);
                     }
                     if (!self->exception)
@@ -355,13 +369,51 @@ s_client_execute (s_client_t *self, event_t event)
             case connected_state:
                 if (self->event == timeline_event) {
                     if (!self->exception) {
-                        //  terminate
+                        //  new timeline
                         if (self->verbose)
-                            zsys_debug ("%s:         $ terminate", self->log_prefix);
-                        self->fsm_stopped = true;
+                            zsys_debug ("%s:         $ new timeline", self->log_prefix);
+                        new_timeline (&self->client);
+                    }
+                    if (!self->exception) {
+                        //  subscribe
+                        if (self->verbose)
+                            zsys_debug ("%s:         $ subscribe", self->log_prefix);
+                        subscribe (&self->client);
                     }
                     if (!self->exception)
-                        self->state = connected_state;
+                        self->state = updating_state;
+                }
+                else {
+                    //  Handle unexpected internal events
+                    zsys_warning ("%s: unhandled event %s in %s",
+                        self->log_prefix,
+                        s_event_name [self->event],
+                        s_state_name [self->state]);
+                    assert (false);
+                }
+                break;
+
+            case updating_state:
+                if (self->event == new_epoch_event) {
+                    if (!self->exception) {
+                        //  forward debut
+                        if (self->verbose)
+                            zsys_debug ("%s:         $ forward debut", self->log_prefix);
+                        forward_debut (&self->client);
+                    }
+                    if (!self->exception)
+                        self->state = updating_state;
+                }
+                else
+                if (self->event == del_epoch_event) {
+                    if (!self->exception) {
+                        //  forward rescind
+                        if (self->verbose)
+                            zsys_debug ("%s:         $ forward rescind", self->log_prefix);
+                        forward_rescind (&self->client);
+                    }
+                    if (!self->exception)
+                        self->state = updating_state;
                 }
                 else {
                     //  Handle unexpected internal events
@@ -421,7 +473,8 @@ s_client_handle_cmdpipe (zloop_t *loop, zsock_t *reader, void *argument)
     else
     if (streq (method, "CONSTRUCTOR")) {
         zstr_free (&self->args.endpoint);
-        zsock_recv (self->cmdpipe, "s8", &self->args.endpoint, &self->args.tbeg);
+        zstr_free (&self->args.publisher);
+        zsock_recv (self->cmdpipe, "ss8", &self->args.endpoint, &self->args.publisher, &self->args.tbeg);
         s_client_execute (self, constructor_event);
     }
     //  Cleanup pipe if any argument frames are still waiting to be eaten
@@ -485,8 +538,6 @@ s_client_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
         if (dax_epoch_recv (self->message, self->dealer))
             return -1;              //  Interrupted; exit zloop
 
-        zsys_debug ("Server message");
-        dax_epoch_print (self->message);
         s_client_execute (self, s_protocol_event (self, self->message));
         if (self->terminated)
             return -1;
@@ -538,7 +589,7 @@ struct _dax_epoch_client_t {
 //  Connect to timeline server.
 
 static int
-dax_epoch_client_constructor (dax_epoch_client_t *self, const char *endpoint, uint64_t tbeg);
+dax_epoch_client_constructor (dax_epoch_client_t *self, const char *endpoint, const char *publisher, uint64_t tbeg);
 
 dax_epoch_client_t *
 dax_epoch_client_new (void)
@@ -612,11 +663,11 @@ dax_epoch_client_msgpipe (dax_epoch_client_t *self)
 //  Connect to timeline server.
 
 static int
-dax_epoch_client_constructor (dax_epoch_client_t *self, const char *endpoint, uint64_t tbeg)
+dax_epoch_client_constructor (dax_epoch_client_t *self, const char *endpoint, const char *publisher, uint64_t tbeg)
 {
     assert (self);
 
-    zsock_send (self->actor, "ss8", "CONSTRUCTOR", endpoint, tbeg);
+    zsock_send (self->actor, "sss8", "CONSTRUCTOR", endpoint, publisher, tbeg);
     return 0;
 }
 

@@ -9,11 +9,6 @@ include_HEADERS = \
 if ENABLE_DRAFTS
 include_HEADERS += \
     dax_ident.h \
-    dax_epoch.h \
-    dax_epoch_server.h \
-    dax_epoch_client.h \
-    dax_chirp_msg.h \
-    dax_chirp_peer.h \
     dax_timeline.h
 
 endif

@@ -18,13 +18,25 @@
     </event>
   </state>
   <state name="connected">
-    <event name="TIMELINE" next = "connected">
-      <action name = "terminate"/>
+    <event name="TIMELINE" next = "updating">
+      <action name = "new timeline"/>
+      <action name = "subscribe"/>
     </event>
   </state>
+
+  <state name="updating">
+    <event name="new epoch" next = "updating">
+      <action name = "forward debut"/>
+    </event>
+    <event name="del epoch" next = "updating">
+      <action name = "forward rescind"/>
+    </event>
+  </state>
+
   <method name="constructor">
     Connect to timeline server.
     <field name="endpoint" type="string"/>
+    <field name="publisher" type="string"/>
     <field name = "tbeg" type="number" size="8"/>
   </method>
 
