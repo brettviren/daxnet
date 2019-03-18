@@ -10,13 +10,20 @@
   <include filename = "../license.xml" />
   
   <state name = "start" inherit = "defaults">
+
     <event name = "STATUS" next = "start">
-      <action name = "send timeline" />
+      <action name = "set timeline" />
+      <action name = "send" message = "TIMELINE" />
       <action name = "terminate" />
     </event>
 
-    <event name = "debut" next = "start">
+    <event name = "DEBUT" next = "start">
       <action name = "store debut" />
+      <action name = "terminate" />
+    </event>
+
+    <event name = "RESCIND" next = "start">
+      <action name = "store rescind" />
       <action name = "terminate" />
     </event>
 

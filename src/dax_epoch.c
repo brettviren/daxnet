@@ -39,6 +39,7 @@ struct _dax_epoch_t {
     uint64_t dtbeg;                     //  Begin time measured in data clock.
     uint64_t dtend;                     //  End time measured in data clock.
     uint64_t declared;                  //  Wall clock time when declared.
+    uint32_t upto;                      //  The epoch identifier.
     zmsg_t *epochs;                     //  An ordered list of epochs as a message.  One frame per DEBUT.
     uint16_t status;                    //  3-digit status code
     char reason [256];                  //  Printable explanation
@@ -452,19 +453,19 @@ dax_epoch_t *
             }
             {
             char *es = NULL;
-            char *s = zconfig_get (content, "ident", NULL);
+            char *s = zconfig_get (content, "upto", NULL);
             if (!s) {
-                zsys_error ("content/ident not found");
+                zsys_error ("content/upto not found");
                 dax_epoch_destroy (&self);
                 return NULL;
             }
             uint64_t uvalue = (uint64_t) strtoll (s, &es, 10);
             if (es != s+strlen (s)) {
-                zsys_error ("content/ident: %s is not a number", s);
+                zsys_error ("content/upto: %s is not a number", s);
                 dax_epoch_destroy (&self);
                 return NULL;
             }
-            self->ident = uvalue;
+            self->upto = uvalue;
             }
             {
             char *s = zconfig_get (content, "epochs", NULL);
@@ -566,6 +567,7 @@ dax_epoch_dup (dax_epoch_t *other)
     dax_epoch_set_dtbeg (copy, dax_epoch_dtbeg (other));
     dax_epoch_set_dtend (copy, dax_epoch_dtend (other));
     dax_epoch_set_declared (copy, dax_epoch_declared (other));
+    dax_epoch_set_upto (copy, dax_epoch_upto (other));
     {
         zmsg_t *dup_msg = zmsg_dup (dax_epoch_epochs (other));
         dax_epoch_set_epochs (copy, &dup_msg);
@@ -638,7 +640,7 @@ dax_epoch_recv (dax_epoch_t *self, zsock_t *input)
             break;
 
         case DAX_EPOCH_TIMELINE:
-            GET_NUMBER4 (self->ident);
+            GET_NUMBER4 (self->upto);
             //  Get zero or more remaining frames
             zmsg_destroy (&self->epochs);
             if (zsock_rcvmore (input))
@@ -698,7 +700,7 @@ dax_epoch_send (dax_epoch_t *self, zsock_t *output)
             frame_size += 8;            //  dtbeg
             break;
         case DAX_EPOCH_TIMELINE:
-            frame_size += 4;            //  ident
+            frame_size += 4;            //  upto
             break;
         case DAX_EPOCH_ERROR:
             frame_size += 2;            //  status
@@ -732,7 +734,7 @@ dax_epoch_send (dax_epoch_t *self, zsock_t *output)
             break;
 
         case DAX_EPOCH_TIMELINE:
-            PUT_NUMBER4 (self->ident);
+            PUT_NUMBER4 (self->upto);
             nbr_frames += self->epochs? zmsg_size (self->epochs): 1;
             have_epochs = true;
             break;
@@ -791,7 +793,7 @@ dax_epoch_print (dax_epoch_t *self)
 
         case DAX_EPOCH_TIMELINE:
             zsys_debug ("DAX_EPOCH_TIMELINE:");
-            zsys_debug ("    ident=%ld", (long) self->ident);
+            zsys_debug ("    upto=%ld", (long) self->upto);
             zsys_debug ("    epochs=");
             if (self->epochs)
                 zmsg_print (self->epochs);
@@ -884,7 +886,7 @@ dax_epoch_zpl (dax_epoch_t *self, zconfig_t *parent)
 
 
             zconfig_t *config = zconfig_new ("content", root);
-            zconfig_putf (config, "ident", "%ld", (long) self->ident);
+            zconfig_putf (config, "upto", "%ld", (long) self->upto);
             {
             char *hex = NULL;
 #if CZMQ_VERSION_MAJOR == 4
@@ -1057,6 +1059,24 @@ dax_epoch_set_declared (dax_epoch_t *self, uint64_t declared)
 {
     assert (self);
     self->declared = declared;
+}
+
+
+//  --------------------------------------------------------------------------
+//  Get/set the upto field
+
+uint32_t
+dax_epoch_upto (dax_epoch_t *self)
+{
+    assert (self);
+    return self->upto;
+}
+
+void
+dax_epoch_set_upto (dax_epoch_t *self, uint32_t upto)
+{
+    assert (self);
+    self->upto = upto;
 }
 
 
@@ -1257,7 +1277,7 @@ dax_epoch_test (bool verbose)
         }
     }
     dax_epoch_set_id (self, DAX_EPOCH_TIMELINE);
-    dax_epoch_set_ident (self, 123);
+    dax_epoch_set_upto (self, 123);
     zmsg_t *timeline_epochs = zmsg_new ();
     dax_epoch_set_epochs (self, &timeline_epochs);
     zmsg_addstr (dax_epoch_epochs (self), "Captcha Diem");
@@ -1280,7 +1300,7 @@ dax_epoch_test (bool verbose)
         }
         if (instance < 2)
             assert (dax_epoch_routing_id (self));
-        assert (dax_epoch_ident (self) == 123);
+        assert (dax_epoch_upto (self) == 123);
         assert (zmsg_size (dax_epoch_epochs (self)) == 1);
         char *content = zmsg_popstr (dax_epoch_epochs (self));
         assert (streq (content, "Captcha Diem"));

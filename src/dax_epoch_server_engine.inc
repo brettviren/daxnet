@@ -34,8 +34,10 @@ typedef enum {
     NULL_event = 0,
     terminate_event = 1,
     status_event = 2,
-    expired_event = 3,
-    exception_event = 4
+    debut_event = 3,
+    rescind_event = 4,
+    expired_event = 5,
+    exception_event = 6
 } event_t;
 
 //  Names for state machine logging and error reporting
@@ -51,6 +53,8 @@ s_event_name [] = {
     "(NONE)",
     "terminate",
     "STATUS",
+    "DEBUT",
+    "RESCIND",
     "expired",
     "exception"
 };
@@ -122,7 +126,11 @@ static int
 static void
     s_client_finalize (s_client_t **self_p);
 static void
-    send_timeline (client_t *self);
+    set_timeline (client_t *self);
+static void
+    store_debut (client_t *self);
+static void
+    store_rescind (client_t *self);
 static void
     signal_command_invalid (client_t *self);
 
@@ -352,6 +360,12 @@ s_protocol_event (dax_epoch_t *message)
 {
     assert (message);
     switch (dax_epoch_id (message)) {
+        case DAX_EPOCH_DEBUT:
+            return debut_event;
+            break;
+        case DAX_EPOCH_RESCIND:
+            return rescind_event;
+            break;
         case DAX_EPOCH_STATUS:
             return status_event;
             break;
@@ -461,8 +475,42 @@ s_client_execute (s_client_t *self, event_t event)
                     if (!self->exception) {
                         //  send timeline
                         if (self->server->verbose)
-                            zsys_debug ("%s:         $ send timeline", self->log_prefix);
-                        send_timeline (&self->client);
+                            zsys_debug ("%s:         $ set timeline", self->log_prefix);
+                        set_timeline (&self->client);
+                    }
+                    if (!self->exception) {
+                        //  terminate
+                        if (self->server->verbose)
+                            zsys_debug ("%s:         $ terminate", self->log_prefix);
+                        self->next_event = terminate_event;
+                    }
+                    if (!self->exception)
+                        self->state = start_state;
+                }
+                else
+                if (self->event == debut_event) {
+                    if (!self->exception) {
+                        //  store debut
+                        if (self->server->verbose)
+                            zsys_debug ("%s:         $ store debut", self->log_prefix);
+                        store_debut (&self->client);
+                    }
+                    if (!self->exception) {
+                        //  terminate
+                        if (self->server->verbose)
+                            zsys_debug ("%s:         $ terminate", self->log_prefix);
+                        self->next_event = terminate_event;
+                    }
+                    if (!self->exception)
+                        self->state = start_state;
+                }
+                else
+                if (self->event == rescind_event) {
+                    if (!self->exception) {
+                        //  store rescind
+                        if (self->server->verbose)
+                            zsys_debug ("%s:         $ store rescind", self->log_prefix);
+                        store_rescind (&self->client);
                     }
                     if (!self->exception) {
                         //  terminate

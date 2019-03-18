@@ -34,7 +34,7 @@
         dtbeg               number 8    Begin time measured in data clock.
 
     TIMELINE - A timeline.
-        ident               number 4    The epoch identifier.
+        upto                number 4    The epoch identifier.
         epochs              msg         An ordered list of epochs as a message.  One frame per DEBUT.
 
     ERROR - Command failed for some specific reason
@@ -150,6 +150,12 @@ uint64_t
     dax_epoch_declared (dax_epoch_t *self);
 void
     dax_epoch_set_declared (dax_epoch_t *self, uint64_t declared);
+
+//  Get/set the upto field
+uint32_t
+    dax_epoch_upto (dax_epoch_t *self);
+void
+    dax_epoch_set_upto (dax_epoch_t *self, uint32_t upto);
 
 //  Get a copy of the epochs field
 zmsg_t *

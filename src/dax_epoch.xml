@@ -45,7 +45,7 @@
 
   <message name = "TIMELINE">
     A timeline.
-    <field name = "ident" type = "number" size = "4">The epoch identifier.</field>
+    <field name = "upto" type = "number" size = "4">The epoch identifier.</field>
 
     <field name = "epochs" type = "msg">
       An ordered list of epochs as a message.  One frame per DEBUT.
