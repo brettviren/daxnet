@@ -1,0 +1,3 @@
+#+title: DAX Proto
+
+This package provides mid-level code for daxnet protocols.  It's based on zproto/zproject generated code.
