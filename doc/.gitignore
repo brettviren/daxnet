@@ -25,6 +25,12 @@ dax_chirp_peer.txt
 dax_chirp_peer.doc
 dax_timeline.txt
 dax_timeline.doc
+dax_timeline_codec.txt
+dax_timeline_codec.doc
+dax_timeline_server.txt
+dax_timeline_server.doc
+dax_timeline_client.txt
+dax_timeline_client.doc
 
 # Make sure to track the manually maintained project description
 !*.adoc

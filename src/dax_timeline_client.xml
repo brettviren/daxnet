@@ -1,0 +1,70 @@
+<class
+    name = "dax_timeline_client"
+    title = "DAX Timeline Client"
+    script = "zproto_client_c"
+    protocol_class = "dax_timeline_codec"
+    package_dir = "../include"
+    project_header = "dax_classes.h"
+    >
+  This is the DAX Timeline Client implementation.  It starts, gets
+  latest timeline from the server and then subscribes to get any new
+  ones.
+
+  <include filename = "../license.xml" />
+
+  <state name = "start">
+
+    <!-- this is a method -->
+    <event name = "connect" next = "listening">
+      <action name = "connect to server" />
+      <action name = "send" message = "SEND TIMELINE" />
+    </event>
+
+  </state>
+
+  <state name = "listening" inherit = "defaults">
+
+    <event name = "TIMELINE" next = "listening">
+      <action name = "forward timeline"/>
+    </event>
+
+  </state>
+
+
+  <state name = "defaults">
+    <event name = "exception">
+      <!-- Generic exception event to interrupt actions -->
+    </event>
+    <event name = "*">
+      <action name = "signal internal error" />
+      <action name = "terminate" />
+    </event>
+  </state>
+  
+
+  <!-- API methods -->
+
+  <method name = "connect" return ="status">
+    Connect to server endpoints with timeout.
+    <field name = "server_endpoint" type="string"/>
+    <field name = "publisher_endpoint" type="string"/>
+    <field name = "timeout" type = "number" size = "4" />
+    <accept reply = "CONNECTED" />
+    <accept reply = "FAILURE" />
+  </method>
+
+  <reply name = "CONNECTED">
+    <field name = "status" type = "integer" />
+    <field name = "nickname" type = "string" />
+  </reply>
+  <reply name = "SUCCESS">
+    <field name = "status" type = "integer" />
+  </reply>
+
+  <reply name = "FAILURE">
+    <field name = "status" type = "integer" />
+    <field name = "reason" type = "string" />
+  </reply>
+
+
+</class>

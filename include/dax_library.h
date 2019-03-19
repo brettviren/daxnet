@@ -98,6 +98,12 @@ typedef struct _dax_chirp_peer_t dax_chirp_peer_t;
 #define DAX_CHIRP_PEER_T_DEFINED
 typedef struct _dax_timeline_t dax_timeline_t;
 #define DAX_TIMELINE_T_DEFINED
+typedef struct _dax_timeline_codec_t dax_timeline_codec_t;
+#define DAX_TIMELINE_CODEC_T_DEFINED
+typedef struct _dax_timeline_server_t dax_timeline_server_t;
+#define DAX_TIMELINE_SERVER_T_DEFINED
+typedef struct _dax_timeline_client_t dax_timeline_client_t;
+#define DAX_TIMELINE_CLIENT_T_DEFINED
 #endif // DAX_BUILD_DRAFT_API
 
 
@@ -110,6 +116,9 @@ typedef struct _dax_timeline_t dax_timeline_t;
 #include "dax_chirp_msg.h"
 #include "dax_chirp_peer.h"
 #include "dax_timeline.h"
+#include "dax_timeline_codec.h"
+#include "dax_timeline_server.h"
+#include "dax_timeline_client.h"
 #endif // DAX_BUILD_DRAFT_API
 
 #ifdef DAX_BUILD_DRAFT_API

@@ -21,6 +21,8 @@
   <class name = "dax_acc" />
   -->
 
+  <!-- add state="stable" to get rid of draft notice -->
+
   <class name = "dax_epoch" />
   <class name = "dax_epoch_server" />
   <class name = "dax_epoch_client" />
@@ -34,5 +36,8 @@
   <model name = "dax_chirp_peer" />
 
   <class name = "dax_timeline"/>
+  <class name = "dax_timeline_codec"/>
+  <class name = "dax_timeline_server"/>
+  <class name = "dax_timeline_client"/>
 
 </project>

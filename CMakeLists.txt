@@ -170,6 +170,9 @@ IF (ENABLE_DRAFTS)
         include/dax_chirp_msg.h
         include/dax_chirp_peer.h
         include/dax_timeline.h
+        include/dax_timeline_codec.h
+        include/dax_timeline_server.h
+        include/dax_timeline_client.h
     )
 ENDIF (ENABLE_DRAFTS)
 
@@ -194,6 +197,9 @@ IF (ENABLE_DRAFTS)
         src/dax_chirp_msg.c
         src/dax_chirp_peer.c
         src/dax_timeline.c
+        src/dax_timeline_codec.c
+        src/dax_timeline_server.c
+        src/dax_timeline_client.c
     )
 ENDIF (ENABLE_DRAFTS)
 
@@ -400,6 +406,9 @@ IF (ENABLE_DRAFTS)
     dax_chirp_msg
     dax_chirp_peer
     dax_timeline
+    dax_timeline_codec
+    dax_timeline_server
+    dax_timeline_client
     )
 ENDIF (ENABLE_DRAFTS)
 

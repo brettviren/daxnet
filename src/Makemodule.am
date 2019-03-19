@@ -26,7 +26,12 @@ src_libdax_la_SOURCES += \
     src/dax_chirp_msg.c \
     src/dax_chirp_peer.c \
     src/dax_chirp_peer_engine.inc \
-    src/dax_timeline.c
+    src/dax_timeline.c \
+    src/dax_timeline_codec.c \
+    src/dax_timeline_server.c \
+    src/dax_timeline_server_engine.inc \
+    src/dax_timeline_client.c \
+    src/dax_timeline_client_engine.inc
 
 endif
 
