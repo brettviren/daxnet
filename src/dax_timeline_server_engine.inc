@@ -471,8 +471,6 @@ s_client_execute (s_client_t *self, event_t event)
                             zsys_debug ("%s:         $ send TIMELINE",
                                 self->log_prefix);
                         dax_timeline_codec_set_id (self->server->message, DAX_TIMELINE_CODEC_TIMELINE);
-                        zsys_debug ("%s: Send message to client", self->log_prefix);
-                        dax_timeline_codec_print (self->server->message);
                         dax_timeline_codec_set_routing_id (self->server->message, self->routing_id);
                         dax_timeline_codec_send (self->server->message, self->server->router);
                     }
@@ -493,8 +491,6 @@ s_client_execute (s_client_t *self, event_t event)
                             zsys_debug ("%s:         $ send ERROR",
                                 self->log_prefix);
                         dax_timeline_codec_set_id (self->server->message, DAX_TIMELINE_CODEC_ERROR);
-                        zsys_debug ("%s: Send message to client", self->log_prefix);
-                        dax_timeline_codec_print (self->server->message);
                         dax_timeline_codec_set_routing_id (self->server->message, self->routing_id);
                         dax_timeline_codec_send (self->server->message, self->server->router);
                     }
@@ -516,8 +512,6 @@ s_client_execute (s_client_t *self, event_t event)
                             zsys_debug ("%s:         $ send ERROR",
                                 self->log_prefix);
                         dax_timeline_codec_set_id (self->server->message, DAX_TIMELINE_CODEC_ERROR);
-                        zsys_debug ("%s: Send message to client", self->log_prefix);
-                        dax_timeline_codec_print (self->server->message);
                         dax_timeline_codec_set_routing_id (self->server->message, self->routing_id);
                         dax_timeline_codec_send (self->server->message, self->server->router);
                     }
@@ -542,8 +536,6 @@ s_client_execute (s_client_t *self, event_t event)
                             zsys_debug ("%s:         $ send ERROR",
                                 self->log_prefix);
                         dax_timeline_codec_set_id (self->server->message, DAX_TIMELINE_CODEC_ERROR);
-                        zsys_debug ("%s: Send message to client", self->log_prefix);
-                        dax_timeline_codec_print (self->server->message);
                         dax_timeline_codec_set_routing_id (self->server->message, self->routing_id);
                         dax_timeline_codec_send (self->server->message, self->server->router);
                     }
@@ -573,8 +565,6 @@ s_client_execute (s_client_t *self, event_t event)
                             zsys_debug ("%s:         $ send ERROR",
                                 self->log_prefix);
                         dax_timeline_codec_set_id (self->server->message, DAX_TIMELINE_CODEC_ERROR);
-                        zsys_debug ("%s: Send message to client", self->log_prefix);
-                        dax_timeline_codec_print (self->server->message);
                         dax_timeline_codec_set_routing_id (self->server->message, self->routing_id);
                         dax_timeline_codec_send (self->server->message, self->server->router);
                     }
@@ -599,8 +589,6 @@ s_client_execute (s_client_t *self, event_t event)
                             zsys_debug ("%s:         $ send ERROR",
                                 self->log_prefix);
                         dax_timeline_codec_set_id (self->server->message, DAX_TIMELINE_CODEC_ERROR);
-                        zsys_debug ("%s: Send message to client", self->log_prefix);
-                        dax_timeline_codec_print (self->server->message);
                         dax_timeline_codec_set_routing_id (self->server->message, self->routing_id);
                         dax_timeline_codec_send (self->server->message, self->server->router);
                     }
@@ -707,7 +695,6 @@ s_server_new (zsock_t *pipe)
     self->loop = zloop_new ();
     srandom ((unsigned int) zclock_time ());
     self->client_id = randof (1000);
-    zloop_set_verbose (self->loop, true);
     s_server_config_global (self);
 
     //  Initialize application server context
@@ -803,9 +790,6 @@ s_server_handle_pipe (zloop_t *loop, zsock_t *reader, void *argument)
     zmsg_t *msg = zmsg_recv (self->pipe);
     if (!msg)
         return -1;              //  Interrupted; exit zloop
-    zsys_debug ("API message:");
-    zmsg_print (msg);
-
     char *method = zmsg_popstr (msg);
     if (self->verbose)
         zsys_debug ("%s:     API command=%s", self->log_prefix, method);
@@ -907,8 +891,6 @@ s_server_handle_protocol (zloop_t *loop, zsock_t *reader, void *argument)
             zhash_freefn (self->clients, hashkey, s_client_free);
         }
         free (hashkey);
-        zsys_debug ("%d: Client message", client->unique_id);
-        dax_timeline_codec_print (self->message);
         //  Any input from client counts as activity
         if (client->ticket)
             zloop_ticket_reset (self->loop, client->ticket);

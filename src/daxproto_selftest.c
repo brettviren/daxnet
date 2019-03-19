@@ -1,5 +1,5 @@
 /*  =========================================================================
-    dax_selftest.c - run selftests
+    daxproto_selftest.c - run selftests
 
     Runs all selftests.
 
@@ -13,7 +13,7 @@
     =========================================================================
 */
 
-#include "dax_classes.h"
+#include "daxproto_classes.h"
 
 typedef struct {
     const char *testname;           // test name, can be called from command line this way
@@ -25,19 +25,13 @@ typedef struct {
 
 static test_item_t
 all_tests [] = {
-#ifdef DAX_BUILD_DRAFT_API
+#ifdef DAXPROTO_BUILD_DRAFT_API
 // Tests for draft public classes:
-    { "dax_ident", dax_ident_test, false, true, NULL },
-    { "dax_epoch", dax_epoch_test, false, true, NULL },
-    { "dax_epoch_server", dax_epoch_server_test, false, true, NULL },
-    { "dax_epoch_client", dax_epoch_client_test, false, true, NULL },
-    { "dax_chirp_msg", dax_chirp_msg_test, false, true, NULL },
-    { "dax_chirp_peer", dax_chirp_peer_test, false, true, NULL },
     { "dax_timeline", dax_timeline_test, false, true, NULL },
     { "dax_timeline_codec", dax_timeline_codec_test, false, true, NULL },
     { "dax_timeline_server", dax_timeline_server_test, false, true, NULL },
     { "dax_timeline_client", dax_timeline_client_test, false, true, NULL },
-#endif // DAX_BUILD_DRAFT_API
+#endif // DAXPROTO_BUILD_DRAFT_API
     {NULL, NULL, 0, 0, NULL}          //  Sentinel
 };
 
@@ -65,16 +59,16 @@ static void
 test_runall (bool verbose)
 {
     test_item_t *item;
-    printf ("Running daxnet selftests...\n");
+    printf ("Running daxproto selftests...\n");
     for (item = all_tests; item->testname; item++) {
         if (streq (item->testname, "private_classes"))
             continue;
         if (!item->subtest)
             item->test (verbose);
-#ifdef DAX_BUILD_DRAFT_API // selftest is still in draft
+#ifdef DAXPROTO_BUILD_DRAFT_API // selftest is still in draft
         else
-            dax_private_selftest (verbose, item->subtest);
-#endif // DAX_BUILD_DRAFT_API
+            daxproto_private_selftest (verbose, item->subtest);
+#endif // DAXPROTO_BUILD_DRAFT_API
     }
 
     printf ("Tests passed OK\n");
@@ -114,7 +108,7 @@ main (int argc, char **argv)
     for (argn = 1; argn < argc; argn++) {
         if (streq (argv [argn], "--help")
         ||  streq (argv [argn], "-h")) {
-            puts ("dax_selftest.c [options] ...");
+            puts ("daxproto_selftest.c [options] ...");
             puts ("  --verbose / -v         verbose test output");
             puts ("  --number / -n          report number of tests");
             puts ("  --list / -l            list all tests");
@@ -171,13 +165,13 @@ main (int argc, char **argv)
     #endif //
 
     if (test) {
-        printf ("Running daxnet test '%s'...\n", test->testname);
+        printf ("Running daxproto test '%s'...\n", test->testname);
         if (!test->subtest)
             test->test (verbose);
-#ifdef DAX_BUILD_DRAFT_API // selftest is still in draft
+#ifdef DAXPROTO_BUILD_DRAFT_API // selftest is still in draft
         else
-            dax_private_selftest (verbose, test->subtest);
-#endif // DAX_BUILD_DRAFT_API
+            daxproto_private_selftest (verbose, test->subtest);
+#endif // DAXPROTO_BUILD_DRAFT_API
     }
     else
         test_runall (verbose);

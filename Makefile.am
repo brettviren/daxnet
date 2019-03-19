@@ -9,10 +9,9 @@ ACLOCAL_AMFLAGS = -I config
 AM_CPPFLAGS = \
     ${libzmq_CFLAGS} \
     ${czmq_CFLAGS} \
-    ${zyre_CFLAGS} \
     -I$(srcdir)/include
 
-project_libs = ${libzmq_LIBS} ${czmq_LIBS} ${zyre_LIBS}
+project_libs = ${libzmq_LIBS} ${czmq_LIBS}
 
 SUBDIRS = doc
 SUBDIRS += include
@@ -35,7 +34,6 @@ if ENABLE_DIST_CMAKEFILES
 EXTRA_DIST += \
     Findlibzmq.cmake \
     Findczmq.cmake \
-    Findzyre.cmake \
     builds/cmake/Modules/ClangFormat.cmake \
     builds/cmake/clang-format-check.sh.in \
     builds/cmake/Config.cmake.in \
@@ -43,7 +41,7 @@ EXTRA_DIST += \
 endif
 
 EXTRA_DIST += \
-    src/dax_classes.h
+    src/daxproto_classes.h
 
 # NOTE: this "include" syntax is not a "make" but an "autotools" keyword,
 # see https://www.gnu.org/software/automake/manual/html_node/Include.html

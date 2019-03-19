@@ -12,7 +12,7 @@
 @end
 */
 
-#include "dax_classes.h"
+#include "daxproto_classes.h"
 
 //  Structure of our class
 

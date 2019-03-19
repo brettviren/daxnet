@@ -7,7 +7,7 @@
 # Project setup
 ########################################################################
 cmake_minimum_required(VERSION 2.8.8)
-project(daxnet)
+project(daxproto)
 enable_language(C)
 enable_testing()
 
@@ -27,7 +27,7 @@ set(pkg_config_names_private "")
 ########################################################################
 OPTION (ENABLE_DRAFTS "Build and install draft classes and methods" ON)
 IF (ENABLE_DRAFTS)
-    ADD_DEFINITIONS (-DDAX_BUILD_DRAFT_API)
+    ADD_DEFINITIONS (-DDAXPROTO_BUILD_DRAFT_API)
 ENDIF (ENABLE_DRAFTS)
 
 ########################################################################
@@ -127,48 +127,25 @@ ELSE (CZMQ_FOUND)
 ENDIF (CZMQ_FOUND)
 
 ########################################################################
-# ZYRE dependency
-########################################################################
-find_package(zyre REQUIRED)
-IF (ZYRE_FOUND)
-    include_directories(${ZYRE_INCLUDE_DIRS})
-    list(APPEND MORE_LIBRARIES ${ZYRE_LIBRARIES})
-  IF (PC_ZYRE_FOUND)
-      set(pkg_config_names_private "${pkg_config_names_private} libzyre")
-      list(APPEND OPTIONAL_LIBRARIES_STATIC ${PC_ZYRE_STATIC_LDFLAGS})
-  ELSE (PC_ZYRE_FOUND)
-      set(pkg_config_libs_private "${pkg_config_libs_private} -lzyre")
-  ENDIF (PC_ZYRE_FOUND)
-ELSE (ZYRE_FOUND)
-    message( FATAL_ERROR "zyre not found." )
-ENDIF (ZYRE_FOUND)
-
-########################################################################
 # version
 ########################################################################
-set(DAX_VERSION_MAJOR 0)
-set(DAX_VERSION_MINOR 0)
-set(DAX_VERSION_PATCH 0)
-set(DAX_VERSION "${DAX_VERSION_MAJOR}.${DAX_VERSION_MINOR}.${DAX_VERSION_PATCH}")
-message(STATUS "Detected DAX Version - ${DAX_VERSION}")
+set(DAXPROTO_VERSION_MAJOR 0)
+set(DAXPROTO_VERSION_MINOR 0)
+set(DAXPROTO_VERSION_PATCH 0)
+set(DAXPROTO_VERSION "${DAXPROTO_VERSION_MAJOR}.${DAXPROTO_VERSION_MINOR}.${DAXPROTO_VERSION_PATCH}")
+message(STATUS "Detected DAXPROTO Version - ${DAXPROTO_VERSION}")
 
 
 ########################################################################
 # includes
 ########################################################################
-set (dax_headers
-    include/dax_library.h
-    include/daxnet.h
+set (daxproto_headers
+    include/daxproto_library.h
+    include/daxproto.h
 )
 
 IF (ENABLE_DRAFTS)
-    list(APPEND dax_headers
-        include/dax_ident.h
-        include/dax_epoch.h
-        include/dax_epoch_server.h
-        include/dax_epoch_client.h
-        include/dax_chirp_msg.h
-        include/dax_chirp_peer.h
+    list(APPEND daxproto_headers
         include/dax_timeline.h
         include/dax_timeline_codec.h
         include/dax_timeline_server.h
@@ -176,8 +153,8 @@ IF (ENABLE_DRAFTS)
     )
 ENDIF (ENABLE_DRAFTS)
 
-source_group ("Header Files" FILES ${dax_headers})
-install(FILES ${dax_headers} DESTINATION include)
+source_group ("Header Files" FILES ${daxproto_headers})
+install(FILES ${daxproto_headers} DESTINATION include)
 
 ########################################################################
 # library
@@ -185,17 +162,11 @@ install(FILES ${dax_headers} DESTINATION include)
 
 
 include_directories("${SOURCE_DIR}/src" "${SOURCE_DIR}/include" "${CMAKE_BINARY_DIR}")
-set (dax_sources
+set (daxproto_sources
 )
 
 IF (ENABLE_DRAFTS)
-    list (APPEND dax_sources
-        src/dax_ident.c
-        src/dax_epoch.c
-        src/dax_epoch_server.c
-        src/dax_epoch_client.c
-        src/dax_chirp_msg.c
-        src/dax_chirp_peer.c
+    list (APPEND daxproto_sources
         src/dax_timeline.c
         src/dax_timeline_codec.c
         src/dax_timeline_server.c
@@ -204,58 +175,58 @@ IF (ENABLE_DRAFTS)
 ENDIF (ENABLE_DRAFTS)
 
 IF (ENABLE_DRAFTS)
-    list (APPEND dax_sources
-        src/dax_private_selftest.c
+    list (APPEND daxproto_sources
+        src/daxproto_private_selftest.c
     )
 ENDIF (ENABLE_DRAFTS)
 
-source_group("Source Files" FILES ${dax_sources})
+source_group("Source Files" FILES ${daxproto_sources})
 
 
-option(DAX_BUILD_SHARED "Whether or not to build the shared object" ON)
-option(DAX_BUILD_STATIC "Whether or not to build the static archive" ON)
+option(DAXPROTO_BUILD_SHARED "Whether or not to build the shared object" ON)
+option(DAXPROTO_BUILD_STATIC "Whether or not to build the static archive" ON)
 
-if (NOT DAX_BUILD_SHARED AND NOT DAX_BUILD_STATIC)
+if (NOT DAXPROTO_BUILD_SHARED AND NOT DAXPROTO_BUILD_STATIC)
   message(FATAL_ERROR "Neither static nor shared library build enabled")
 endif()
 
 IF (NOT MSVC)
   # avoid building everything twice for shared + static
   # only on *nix, as Windows needs different preprocessor defines in static builds
-  add_library (dax_objects OBJECT ${dax_sources})
-  set_property(TARGET dax_objects PROPERTY POSITION_INDEPENDENT_CODE ON)
+  add_library (daxproto_objects OBJECT ${daxproto_sources})
+  set_property(TARGET daxproto_objects PROPERTY POSITION_INDEPENDENT_CODE ON)
 ENDIF (NOT MSVC)
 
 # shared
-if (DAX_BUILD_SHARED)
+if (DAXPROTO_BUILD_SHARED)
   IF (MSVC)
-    add_library(dax SHARED ${dax_sources})
+    add_library(daxproto SHARED ${daxproto_sources})
   ELSE (MSVC)
-    add_library(dax SHARED $<TARGET_OBJECTS:dax_objects>)
+    add_library(daxproto SHARED $<TARGET_OBJECTS:daxproto_objects>)
   ENDIF (MSVC)
 
-  set_target_properties (dax PROPERTIES
+  set_target_properties (daxproto PROPERTIES
     PUBLIC_HEADER "${public_headers}"
-    DEFINE_SYMBOL "DAX_EXPORTS"
+    DEFINE_SYMBOL "DAXPROTO_EXPORTS"
     SOVERSION "0"
-    VERSION "${DAX_VERSION}"
+    VERSION "${DAXPROTO_VERSION}"
     COMPILE_DEFINITIONS "DLL_EXPORT"
-    OUTPUT_NAME "dax"
+    OUTPUT_NAME "daxproto"
     PREFIX "lib"
   )
 
-  target_link_libraries(dax
+  target_link_libraries(daxproto
     PUBLIC ${MORE_LIBRARIES}
   )
 
-  install(TARGETS dax
-    EXPORT dax-targets
+  install(TARGETS daxproto
+    EXPORT daxproto-targets
     LIBRARY DESTINATION "lib${LIB_SUFFIX}" # .so file
     ARCHIVE DESTINATION "lib${LIB_SUFFIX}" # .lib file
     RUNTIME DESTINATION bin                # .dll file
   )
 
-  target_include_directories(dax
+  target_include_directories(daxproto
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
@@ -263,38 +234,38 @@ if (DAX_BUILD_SHARED)
 endif()
 
 # static
-if (DAX_BUILD_STATIC)
+if (DAXPROTO_BUILD_STATIC)
   IF (MSVC)
-    add_library(dax-static STATIC ${dax_sources})
+    add_library(daxproto-static STATIC ${daxproto_sources})
   ELSE (MSVC)
-    add_library(dax-static STATIC $<TARGET_OBJECTS:dax_objects>)
+    add_library(daxproto-static STATIC $<TARGET_OBJECTS:daxproto_objects>)
   ENDIF (MSVC)
 
-  set_target_properties(dax-static PROPERTIES
+  set_target_properties(daxproto-static PROPERTIES
     PUBLIC_HEADER "${public_headers}"
-    COMPILE_DEFINITIONS "DAX_STATIC"
-    OUTPUT_NAME "dax"
+    COMPILE_DEFINITIONS "DAXPROTO_STATIC"
+    OUTPUT_NAME "daxproto"
     PREFIX "lib"
   )
 
-  target_link_libraries(dax-static
+  target_link_libraries(daxproto-static
     PUBLIC ${MORE_LIBRARIES}
   )
 
-  install(TARGETS dax-static
-    EXPORT dax-targets
+  install(TARGETS daxproto-static
+    EXPORT daxproto-targets
     LIBRARY DESTINATION "lib${LIB_SUFFIX}" # .so file
     ARCHIVE DESTINATION "lib${LIB_SUFFIX}" # .lib file
     RUNTIME DESTINATION bin                # .dll file
   )
 
-  target_include_directories(dax-static
+  target_include_directories(daxproto-static
     PUBLIC
       $<BUILD_INTERFACE:${CMAKE_CURRENT_SOURCE_DIR}/include>
       $<INSTALL_INTERFACE:include>
   )
-  target_compile_definitions(dax-static
-    PUBLIC DAX_STATIC
+  target_compile_definitions(daxproto-static
+    PUBLIC DAXPROTO_STATIC
   )
 
 endif()
@@ -310,17 +281,17 @@ set (exec_prefix "\${prefix}")
 set (libdir "\${prefix}/lib${LIB_SUFFIX}")
 set (includedir "\${prefix}/include")
 IF (ENABLE_DRAFTS)
-    set (pkg_config_defines "-DDAX_BUILD_DRAFT_API=1")
+    set (pkg_config_defines "-DDAXPROTO_BUILD_DRAFT_API=1")
 ELSE (ENABLE_DRAFTS)
     set (pkg_config_defines "")
 ENDIF (ENABLE_DRAFTS)
 configure_file(
-    "${SOURCE_DIR}/src/libdax.pc.in"
-    "${SOURCE_DIR}/src/libdax.pc"
+    "${SOURCE_DIR}/src/libdaxproto.pc.in"
+    "${SOURCE_DIR}/src/libdaxproto.pc"
 @ONLY)
 
 install(
-    FILES "${SOURCE_DIR}/src/libdax.pc"
+    FILES "${SOURCE_DIR}/src/libdaxproto.pc"
     DESTINATION "lib${LIB_SUFFIX}/pkgconfig"
 )
 
@@ -329,53 +300,51 @@ install(
 ########################################################################
 include(CMakePackageConfigHelpers)
 if (WIN32)
-  set(CMAKECONFIG_INSTALL_DIR "CMake" CACHE STRING "install path for daxConfig.cmake")
+  set(CMAKECONFIG_INSTALL_DIR "CMake" CACHE STRING "install path for daxprotoConfig.cmake")
 else()
   # GNUInstallDirs "DATADIR" wrong here; CMake search path wants "share".
-  set(CMAKECONFIG_INSTALL_DIR "share/cmake/dax" CACHE STRING "install path for daxConfig.cmake")
+  set(CMAKECONFIG_INSTALL_DIR "share/cmake/daxproto" CACHE STRING "install path for daxprotoConfig.cmake")
 endif()
 
 if (NOT CMAKE_VERSION VERSION_LESS 3.0)
-  export(EXPORT dax-targets
-         FILE "${CMAKE_CURRENT_BINARY_DIR}/daxTargets.cmake")
+  export(EXPORT daxproto-targets
+         FILE "${CMAKE_CURRENT_BINARY_DIR}/daxprotoTargets.cmake")
 endif()
 configure_package_config_file(builds/cmake/Config.cmake.in
-                              "${CMAKE_CURRENT_BINARY_DIR}/daxConfig.cmake"
+                              "${CMAKE_CURRENT_BINARY_DIR}/daxprotoConfig.cmake"
                               INSTALL_DESTINATION ${CMAKECONFIG_INSTALL_DIR})
-write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/daxConfigVersion.cmake
-                                 VERSION ${DAX_VERSION}
+write_basic_package_version_file(${CMAKE_CURRENT_BINARY_DIR}/daxprotoConfigVersion.cmake
+                                 VERSION ${DAXPROTO_VERSION}
                                  COMPATIBILITY AnyNewerVersion)
-install(EXPORT dax-targets
-        FILE daxTargets.cmake
+install(EXPORT daxproto-targets
+        FILE daxprotoTargets.cmake
         DESTINATION ${CMAKECONFIG_INSTALL_DIR})
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/daxConfig.cmake
-              ${CMAKE_CURRENT_BINARY_DIR}/daxConfigVersion.cmake
+install(FILES ${CMAKE_CURRENT_BINARY_DIR}/daxprotoConfig.cmake
+              ${CMAKE_CURRENT_BINARY_DIR}/daxprotoConfigVersion.cmake
               DESTINATION ${CMAKECONFIG_INSTALL_DIR})
 
 ########################################################################
 # executables
 ########################################################################
 add_executable(
-    dax_selftest
-    "${SOURCE_DIR}/src/dax_selftest.c"
+    daxproto_selftest
+    "${SOURCE_DIR}/src/daxproto_selftest.c"
 )
-if (TARGET dax)
+if (TARGET daxproto)
 target_link_libraries(
-    dax_selftest
-    dax
+    daxproto_selftest
+    daxproto
     ${LIBZMQ_LIBRARIES}
     ${CZMQ_LIBRARIES}
-    ${ZYRE_LIBRARIES}
     ${OPTIONAL_LIBRARIES}
 )
 endif()
-if (NOT TARGET dax AND TARGET dax-static)
+if (NOT TARGET daxproto AND TARGET daxproto-static)
 target_link_libraries(
-    dax_selftest
-    dax-static
+    daxproto_selftest
+    daxproto-static
     ${LIBZMQ_LIBRARIES}
     ${CZMQ_LIBRARIES}
-    ${ZYRE_LIBRARIES}
     ${OPTIONAL_LIBRARIES}
     ${OPTIONAL_LIBRARIES_STATIC}
 )
@@ -399,12 +368,6 @@ set(TEST_CLASSES
 
 IF (ENABLE_DRAFTS)
     list (APPEND TEST_CLASSES
-    dax_ident
-    dax_epoch
-    dax_epoch_server
-    dax_epoch_client
-    dax_chirp_msg
-    dax_chirp_peer
     dax_timeline
     dax_timeline_codec
     dax_timeline_server
@@ -437,7 +400,7 @@ set_directory_properties(
 foreach(TEST_CLASS ${TEST_CLASSES})
     add_test(
         NAME ${TEST_CLASS}
-        COMMAND dax_selftest --continue --verbose --test ${TEST_CLASS}
+        COMMAND daxproto_selftest --continue --verbose --test ${TEST_CLASS}
     )
     set_tests_properties(
         ${TEST_CLASS}
@@ -465,10 +428,10 @@ set(cmake_generated ${CMAKE_BINARY_DIR}/CMakeCache.txt
                     ${CMAKE_BINARY_DIR}/Testing
                     ${CMAKE_BINARY_DIR}/compile_commands.json
                     ${CMAKE_BINARY_DIR}/platform.h
-                    ${CMAKE_BINARY_DIR}/src/libdax.pc
-                    ${CMAKE_BINARY_DIR}/src/libdax.so
-                    ${CMAKE_BINARY_DIR}/src/daxnet_selftest
-                    ${CMAKE_BINARY_DIR}/src/dax_selftest
+                    ${CMAKE_BINARY_DIR}/src/libdaxproto.pc
+                    ${CMAKE_BINARY_DIR}/src/libdaxproto.so
+                    ${CMAKE_BINARY_DIR}/src/daxproto_selftest
+                    ${CMAKE_BINARY_DIR}/src/daxproto_selftest
 )
 
 add_custom_command(
@@ -493,8 +456,8 @@ message (STATUS "  C compiler        :   ${CMAKE_C_COMPILER}")
 message (STATUS "  Debug C flags     :   ${CMAKE_C_FLAGS_DEBUG} ${CMAKE_C_FLAGS}")
 message (STATUS "  Release C flags   :   ${CMAKE_C_FLAGS_RELEASE} ${CMAKE_C_FLAGS}")
 message (STATUS "  Build type        :   ${CMAKE_BUILD_TYPE}")
-message (STATUS "  Static build      :   ${DAX_BUILD_STATIC}")
-message (STATUS "  Shared build      :   ${DAX_BUILD_SHARED}")
+message (STATUS "  Static build      :   ${DAXPROTO_BUILD_STATIC}")
+message (STATUS "  Shared build      :   ${DAXPROTO_BUILD_SHARED}")
 IF (ENABLE_DRAFTS)
 message (STATUS "  Draft API         :   Yes")
 ELSE (ENABLE_DRAFTS)

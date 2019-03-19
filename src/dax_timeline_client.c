@@ -13,7 +13,7 @@
 @end
 */
 
-#include "dax_classes.h"
+#include "daxproto_classes.h"
 //  TODO: Change these to match your project's needs
 #include "../include/dax_timeline_codec.h"
 #include "../include/dax_timeline_client.h"

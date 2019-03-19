@@ -3,17 +3,11 @@
 #  Read the zproject/README.md for information about making permanent changes. #
 ################################################################################
 include_HEADERS = \
-    daxnet.h \
-    dax_library.h
+    daxproto.h \
+    daxproto_library.h
 
 if ENABLE_DRAFTS
 include_HEADERS += \
-    dax_ident.h \
-    dax_epoch.h \
-    dax_epoch_server.h \
-    dax_epoch_client.h \
-    dax_chirp_msg.h \
-    dax_chirp_peer.h \
     dax_timeline.h \
     dax_timeline_codec.h \
     dax_timeline_server.h \

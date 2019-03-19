@@ -16,96 +16,96 @@ extern "C" {
 //  @warning Please edit the model at "api/dax_timeline.xml" to make changes.
 //  @interface
 //  This API is a draft, and may change without notice.
-#ifdef DAX_BUILD_DRAFT_API
+#ifdef DAXPROTO_BUILD_DRAFT_API
 //  *** Draft method, for development use, may change without warning ***
 //  Create a DAX timeline.
-DAX_EXPORT dax_timeline_t *
+DAXPROTO_EXPORT dax_timeline_t *
     dax_timeline_new (void);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Destroy the DAX timeline.
-DAX_EXPORT void
+DAXPROTO_EXPORT void
     dax_timeline_destroy (dax_timeline_t **self_p);
 
 //  *** Draft method, for development use, may change without warning ***
 //  The timeline identity number is monotonically increasing with the
 //  wall clock time of the timeline source.
-DAX_EXPORT int
+DAXPROTO_EXPORT int
     dax_timeline_ident (dax_timeline_t *self);
 
 //  *** Draft method, for development use, may change without warning ***
 //  The time of creation of this timeline in seconds from the Unix epoch.
-DAX_EXPORT time_t
+DAXPROTO_EXPORT time_t
     dax_timeline_created (dax_timeline_t *self);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Return the starting time in the 64 bit data clock.
-DAX_EXPORT int64_t
+DAXPROTO_EXPORT int64_t
     dax_timeline_sot (dax_timeline_t *self);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Return the number of intervals.
-DAX_EXPORT size_t
+DAXPROTO_EXPORT size_t
     dax_timeline_size (dax_timeline_t *self);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Return an array of epoch numbers for each interval.  Caller does not own.
-DAX_EXPORT int*
+DAXPROTO_EXPORT int*
     dax_timeline_epochs (dax_timeline_t *self);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Return an array of times ending each interval.  Caller does not own.
-DAX_EXPORT int64_t*
+DAXPROTO_EXPORT int64_t*
     dax_timeline_times (dax_timeline_t *self);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Set the ident.
-DAX_EXPORT void
+DAXPROTO_EXPORT void
     dax_timeline_set_ident (dax_timeline_t *self, int ident);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Set the creation wall clock time.
-DAX_EXPORT void
+DAXPROTO_EXPORT void
     dax_timeline_set_created (dax_timeline_t *self, size_t time);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Set the start of timeline.
-DAX_EXPORT void
+DAXPROTO_EXPORT void
     dax_timeline_set_sot (dax_timeline_t *self, size_t time);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Set the interval data.
-DAX_EXPORT void
+DAXPROTO_EXPORT void
     dax_timeline_set_intervals (dax_timeline_t *self, size_t size, int*  epochs, int64_t*  times);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Encode the timeline to a dax_timeline_codec.
-DAX_EXPORT void
+DAXPROTO_EXPORT void
     dax_timeline_encode (dax_timeline_t *self, dax_timeline_codec_t *codec);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Create a timeline from a dax_timeline_codec.
 //  Caller owns return value and must destroy it when done.
-DAX_EXPORT dax_timeline_t *
+DAXPROTO_EXPORT dax_timeline_t *
     dax_timeline_decode (dax_timeline_codec_t *codec);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Duplicate a timeline.
 //  Caller owns return value and must destroy it when done.
-DAX_EXPORT dax_timeline_t *
+DAXPROTO_EXPORT dax_timeline_t *
     dax_timeline_dup (dax_timeline_t *self);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Print the timeline to stdout
-DAX_EXPORT void
+DAXPROTO_EXPORT void
     dax_timeline_print (dax_timeline_t *self);
 
 //  *** Draft method, for development use, may change without warning ***
 //  Self test of this class
-DAX_EXPORT void
+DAXPROTO_EXPORT void
     dax_timeline_test (bool verbose);
 
-#endif // DAX_BUILD_DRAFT_API
+#endif // DAXPROTO_BUILD_DRAFT_API
 //  @end
 
 #ifdef __cplusplus

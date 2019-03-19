@@ -1,39 +1,15 @@
 <project
-    name = "DAXnet"
-    description = "DAX network components"
-    prefix = "dax"
+    name = "daxproto"
+    description = "DAX midlevel protocol classes"
+    prefix = "daxproto"
     script = "zproject.gsl"
     email = "bv@bnl.gov"
-    repository = "https://github.com/brettviren/daxnet"
+    repository = "https://github.com/brettviren/daxnet-zproto"
     license = "LGPL">
   <include filename = "license.xml"/>
   <version major = "0" minor = "0" />
 
-  <use project = "zyre" />
-
-  <!-- add some targets, python, python_cffi, debian, redhat, travis -->
-
-  <!-- A DAX identity lets an application participates in the DAX network -->
-  <class name = "dax_ident" />
-
-  <!-- A DAX auto configured connection. -->
-  <!-- 
-  <class name = "dax_acc" />
-  -->
-
-  <!-- add state="stable" to get rid of draft notice -->
-
-  <class name = "dax_epoch" />
-  <class name = "dax_epoch_server" />
-  <class name = "dax_epoch_client" />
-  <class name = "dax_chirp_msg" />
-  <class name = "dax_chirp_peer" />
-
-  <model name = "dax_epoch" />
-  <model name = "dax_epoch_server" />
-  <model name = "dax_epoch_client" />
-  <model name = "dax_chirp_msg" />
-  <model name = "dax_chirp_peer" />
+  <use project = "czmq" />
 
   <class name = "dax_timeline"/>
   <class name = "dax_timeline_codec"/>
